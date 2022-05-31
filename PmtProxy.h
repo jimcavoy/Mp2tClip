@@ -1,0 +1,36 @@
+#pragma once
+#include <map>
+
+#include "libmp2t.h"
+
+class PmtProxy
+{
+public:
+	enum class STREAM_TYPE
+	{
+		UNKNOWN,
+		H264,
+		H265,
+		HDMV,
+		VIDEO,
+		AUDIO,
+		KLVA,
+		$EXI
+	};
+
+private:
+	typedef std::map<unsigned short, PmtProxy::STREAM_TYPE> map_type;
+
+public:
+	void update(const lcss::ProgramMapTable& pmt);
+	STREAM_TYPE packetType(unsigned short pid);
+	bool isEmpty() const noexcept
+	{
+		return _pid2type.empty();
+	}
+
+private:
+	map_type _pid2type{};
+	BYTE _version{0xFF};
+};
+
