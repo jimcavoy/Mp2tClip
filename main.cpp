@@ -8,10 +8,15 @@
 #include "CommandLineParser.h"
 #include "Mpeg2TsDecoder.h"
 
+#ifdef _WIN32
+#include <io.h>
+#endif
 #include <cstdint>
+#include <fcntl.h>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <memory>
 
 
 using namespace ThetaStream;
@@ -25,14 +30,25 @@ int main(int argc, char* argv[])
 	try
 	{
 		CommandLineParser cmdline;
-		cmdline.parse(argc, argv, "mp2tclip");
+		cmdline.parse(argc, argv, "Mp2tClip");
 
-		std::ifstream ifile;
-		ifile.open(cmdline.filename(), std::ios::in | std::ios::binary);
-		if (!ifile.is_open())
+		shared_ptr<istream> ifile;
+		if (cmdline.filename() == "-")
 		{
-			cerr << "Error: Fail to open input file %s" << argv[1] << endl;
-			return -1;
+#ifdef _WIN32
+			_setmode(_fileno(stdin), _O_BINARY);
+#endif
+			ifile.reset(&cin, [](...) {});
+		}
+		else
+		{
+			ifstream* tsfile = new ifstream(cmdline.filename(), ios::binary);
+			if (!tsfile->is_open())
+			{
+				cerr << "Failed to open input file " << cmdline.filename() << endl;
+				return -1;
+			}
+			ifile.reset(tsfile);
 		}
 
 		if (fs::create_directory(cmdline.outputDirectory().c_str()))
@@ -42,10 +58,10 @@ int main(int argc, char* argv[])
 		}
 
 		Mpeg2TsDecoder decoder(cmdline);
-		while (ifile.good())
+		while (ifile->good())
 		{
-			ifile.read((char*)memblock, N);
-			decoder.parse(memblock, (unsigned)ifile.gcount());
+			ifile->read((char*)memblock, N);
+			decoder.parse(memblock, (unsigned)ifile->gcount());
 		}
 	}
 	catch (std::exception & ex)

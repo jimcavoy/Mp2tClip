@@ -79,6 +79,7 @@ void ThetaStream::CommandLineParser::parse(int argc, char** argv, const char* ap
 			break;
 		case 'O':
 			_pimpl->_offset = std::stoi(*argv + 1);
+			break;
 		case 'n':
 			_pimpl->_oname = *argv + 1;
 			break;

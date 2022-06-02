@@ -120,7 +120,17 @@ void Mpeg2TsDecoder::onPacket(lcss::TransportPacket& pckt)
 void Mpeg2TsDecoder::createClippedFile()
 {
 	string path = _cmdline.outputDirectory();
-	string fname = MakeFilename(_cmdline.filename(), _fileCount++);
+	string fname = _cmdline.outputFilename();
+	if (_cmdline.filename() != "-")
+	{
+		fname = MakeFilename(_cmdline.filename(), _fileCount++);
+	}
+	else
+	{
+		char newfname[_MAX_PATH]{};
+		sprintf_s(newfname, "%s_%03d%s", _cmdline.outputFilename().c_str(), _fileCount++, ".ts");
+		fname = newfname;
+	}
 	path += "\\";
 	path += fname;
 
