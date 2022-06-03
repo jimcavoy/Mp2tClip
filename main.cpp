@@ -17,6 +17,7 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <array>
 
 
 using namespace ThetaStream;
@@ -26,7 +27,7 @@ namespace fs = std::filesystem;
 int main(int argc, char* argv[])
 {
 	const int N = 188 * 49;
-	uint8_t memblock[N]{};
+	std::array<uint8_t, N> memblock{};
 	try
 	{
 		CommandLineParser cmdline;
@@ -51,17 +52,28 @@ int main(int argc, char* argv[])
 			ifile.reset(tsfile);
 		}
 
-		if (fs::create_directory(cmdline.outputDirectory().c_str()))
+		std::error_code errc{};
+		auto curdir = fs::current_path();
+		fs::path dirname(cmdline.outputDirectory().c_str());
+		fs::path dirpath = curdir / dirname;
+		if (!fs::exists(dirpath))
 		{
-			cerr << "Failed to create directory " << cmdline.outputDirectory() << endl;
-			return -1;
+			if (!fs::create_directory(dirpath, errc))
+			{
+				cerr << "Failed to create directory " << cmdline.outputDirectory() << endl;
+				return -1;
+			}
 		}
 
 		Mpeg2TsDecoder decoder(cmdline);
 		while (ifile->good())
 		{
-			ifile->read((char*)memblock, N);
-			decoder.parse(memblock, (unsigned)ifile->gcount());
+			ifile->read((char*)memblock.data(), N);
+			const streamsize read = ifile->gcount();
+			if (read > 0)
+			{
+				decoder.parse(memblock.data(), (unsigned)read);
+			}
 		}
 	}
 	catch (std::exception & ex)

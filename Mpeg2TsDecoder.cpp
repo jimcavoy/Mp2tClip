@@ -92,6 +92,7 @@ void Mpeg2TsDecoder::onPacket(lcss::TransportPacket& pckt)
 				_pmtPackets.push_back(pckt);
 			}
 		}
+		_ofile.flush();
 	}
 	else
 	{
