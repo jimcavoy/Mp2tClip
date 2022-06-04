@@ -17,53 +17,30 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
-#include <array>
-
+#include <vector>
+#include <sstream>
 
 using namespace ThetaStream;
 using namespace std;
 namespace fs = std::filesystem;
 
+std::shared_ptr<istream> openInputStream(const std::string& input);
+void createOutputDir(const std::string& dirpath);
+
 int main(int argc, char* argv[])
 {
-	const int N = 188 * 49;
-	std::array<uint8_t, N> memblock{};
+	std::vector<uint8_t> memblock{};
 	try
 	{
 		CommandLineParser cmdline;
 		cmdline.parse(argc, argv, "Mp2tClip");
 
-		shared_ptr<istream> ifile;
-		if (cmdline.filename() == "-")
-		{
-#ifdef _WIN32
-			_setmode(_fileno(stdin), _O_BINARY);
-#endif
-			ifile.reset(&cin, [](...) {});
-		}
-		else
-		{
-			ifstream* tsfile = new ifstream(cmdline.filename(), ios::binary);
-			if (!tsfile->is_open())
-			{
-				cerr << "Failed to open input file " << cmdline.filename() << endl;
-				return -1;
-			}
-			ifile.reset(tsfile);
-		}
+		shared_ptr<istream> ifile = openInputStream(cmdline.filename());
+		
+		createOutputDir(cmdline.outputDirectory());
 
-		std::error_code errc{};
-		auto curdir = fs::current_path();
-		fs::path dirname(cmdline.outputDirectory().c_str());
-		fs::path dirpath = curdir / dirname;
-		if (!fs::exists(dirpath))
-		{
-			if (!fs::create_directory(dirpath, errc))
-			{
-				cerr << "Failed to create directory " << cmdline.outputDirectory() << endl;
-				return -1;
-			}
-		}
+		size_t N = cmdline.filename() == "-" ? 7 * 188 : 49 * 188;
+		memblock.resize(N);
 
 		Mpeg2TsDecoder decoder(cmdline);
 		while (ifile->good())
@@ -88,5 +65,48 @@ int main(int argc, char* argv[])
 	}
 
 	return 0;
+}
+
+std::shared_ptr<std::istream> openInputStream(const std::string& input)
+{
+	std::shared_ptr<std::istream> ifile;
+	if (input == "-")
+	{
+#ifdef _WIN32
+		_setmode(_fileno(stdin), _O_BINARY);
+#endif
+		ifile.reset(&cin, [](...) {});
+	}
+	else
+	{
+		ifstream* tsfile = new ifstream(input, ios::binary);
+		if (!tsfile->is_open())
+		{
+			std::stringstream msg;
+			msg << "Fail to open input file, " << input;
+			std::exception ex(msg.str().c_str());
+			throw ex;
+		}
+		ifile.reset(tsfile);
+	}
+	return ifile;
+}
+
+void createOutputDir(const std::string& strDirname)
+{
+	std::error_code errc{};
+	auto curdir = fs::current_path();
+	fs::path dirname(strDirname);
+	fs::path dirpath = curdir / dirname;
+	if (!fs::exists(dirpath))
+	{
+		if (!fs::create_directory(dirpath, errc))
+		{
+			std::stringstream msg;
+			msg << "Fail to create output directory, " << strDirname;
+			std::exception ex(msg.str().c_str());
+			throw ex;
+		}
+	}
 }
 
