@@ -1,6 +1,10 @@
 #include "stdafx.h"
 #include "PmtProxy.h"
 
+#ifdef _WIN32
+#define strncpy strncpy_s
+#endif
+
 namespace
 {
 	char TAG_HDMV[] = { (char)0x48, (char)0x44, (char)0x4D, (char)0x56, (char)0xFF, (char)0x1B, (char)0x44, (char)0x3F, 0 };
@@ -31,14 +35,14 @@ void PmtProxy::update(const lcss::ProgramMapTable& pmt)
 				if (desc.tag() == 0x05)
 				{
 					desc.value((BYTE*)value);
-					strncpy_s(format_identifier, value, 4);
+					strncpy(format_identifier, value, 4);
 					break;
 				}
 				// metadata_descriptor
 				else if (desc.tag() == 0x26)
 				{
 					desc.value((BYTE*)value);
-					strncpy_s(format_identifier, value + 3, 4);
+					strncpy(format_identifier, value + 3, 4);
 					break;
 				}
 			}
@@ -98,7 +102,7 @@ void PmtProxy::update(const lcss::ProgramMapTable& pmt)
 				if (desc.tag() == 0x05)
 				{
 					desc.value((BYTE*)value);
-					strncpy_s(format_identifier, value, 4);
+					strncpy(format_identifier, value, 4);
 					break;
 				}
 			}

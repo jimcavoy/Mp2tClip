@@ -1,11 +1,21 @@
 #include "Mpeg2TsDecoder.h"
 
+#ifndef _WIN32
+#include <libgen.h>
+#endif // !_WIN32
+
 #include <cstdint>
 #include <iostream>
 #include <sstream>
 #include <stdlib.h>
 
 using namespace std;
+
+#ifdef _WIN32
+#define sprintf sprintf_s
+#else
+#define _MAX_PATH 512
+#endif
 
 namespace
 {
@@ -40,9 +50,10 @@ namespace
 		}
 	}
 
-	string MakeFilename(const string& basename, int count)
+	string MakeFilename(const string& path, int count)
 	{
 		string ret;
+#ifdef _WIN32
 		// Extract name
 		char drive[_MAX_DRIVE]{};
 		char dir[_MAX_DIR]{};
@@ -50,10 +61,24 @@ namespace
 		char ext[_MAX_EXT]{};
 		char newfname[_MAX_PATH]{};
 
-		_splitpath_s(basename.c_str(), drive, dir, fname, ext);
+		_splitpath_s(path.c_str(), drive, dir, fname, ext);
 
 		sprintf_s(newfname, "%s_%03d%s", fname, count, ext);
 		ret = newfname;
+#else
+		char newfname[512]{};
+		char* bname = basename((char*)path.c_str());
+		char fname[128]{};
+		int i = 0;
+		char c = bname[i];
+		while (c != '.')
+		{
+			fname[i] = c;
+			c = bname[i++];
+		}
+		sprintf(newfname, "%s_%03d%s", fname, count, ".ts");
+		ret = newfname;
+#endif
 		return ret;
 	}
 }
@@ -111,7 +136,7 @@ void Mpeg2TsDecoder::onPacket(lcss::TransportPacket& pckt)
 	switch (_pmtProxy.packetType(pckt.PID()))
 	{
 	case PmtProxy::STREAM_TYPE::H264:
-		_videoDecoder.parse((const char*)pckt.data(), (UINT32)pckt.length());
+		_videoDecoder.parse((const char*)pckt.data(), (uint32_t)pckt.length());
 		break;
 	}
 
@@ -129,10 +154,14 @@ void Mpeg2TsDecoder::createClippedFile()
 	else
 	{
 		char newfname[_MAX_PATH]{};
-		sprintf_s(newfname, "%s_%03d%s", _cmdline.outputFilename().c_str(), _fileCount++, ".ts");
+		sprintf(newfname, "%s_%03d%s", _cmdline.outputFilename().c_str(), _fileCount++, ".ts");
 		fname = newfname;
 	}
+#ifdef _WIN32
 	path += "\\";
+#else
+	path += "/";
+#endif
 	path += fname;
 
 	if (_ofile.is_open())
@@ -143,9 +172,9 @@ void Mpeg2TsDecoder::createClippedFile()
 	_ofile.open(path, std::ios::out | std::ios::binary);
 	if (!_ofile.is_open())
 	{
-		char szErr[BUFSIZ]{};
-		sprintf_s(szErr, "Failed to open output file %s", path.c_str());
-		std::exception exp(szErr);
+		char szErr[_MAX_PATH]{};
+		sprintf(szErr, "Failed to open output file %s", path.c_str());
+		std::runtime_error exp(szErr);
 		throw exp;
 	}
 	cerr << "Created clipped file " << fname << endl;

@@ -84,7 +84,7 @@ std::shared_ptr<std::istream> openInputStream(const std::string& input)
 		{
 			std::stringstream msg;
 			msg << "Fail to open input file, " << input;
-			std::exception ex(msg.str().c_str());
+			std::runtime_error ex(msg.str().c_str());
 			throw ex;
 		}
 		ifile.reset(tsfile);
@@ -104,7 +104,7 @@ void createOutputDir(const std::string& strDirname)
 		{
 			std::stringstream msg;
 			msg << "Fail to create output directory, " << strDirname;
-			std::exception ex(msg.str().c_str());
+			std::runtime_error ex(msg.str().c_str());
 			throw ex;
 		}
 	}
