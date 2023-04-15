@@ -10,7 +10,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 if (WIN32)
     set(CMAKE_INSTALL_LIBDIR $ENV{APPDATA})
-    include_directories(../loki-lib/include)
+    include_directories(../../loki-lib/include)
 else()
     set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
     include_directories($ENV{HOME}/.vs/loki-lib/include)
@@ -39,4 +39,4 @@ install(TARGETS Mp2tClip
 enable_testing()
 
 add_test(NAME Clip
-	COMMAND Mp2tClip -s${PROJECT_SOURCE_DIR}/sample/svt_testset_420_720p50_klved_4774.ts -d10)
+	COMMAND Mp2tClip -s${PROJECT_SOURCE_DIR}/../sample/svt_testset_420_720p50_klved_4774.ts -d10)
