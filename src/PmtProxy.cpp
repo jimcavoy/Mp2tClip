@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "PmtProxy.h"
 
 #ifdef _WIN32

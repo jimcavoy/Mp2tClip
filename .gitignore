@@ -1,0 +1,15 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/src/CMakeFiles
+/src/Debug
+/src/Mp2tClip.dir
+*.vcxproj
+*.filters
+*.sln
+*.user
+/src/CMakeCache.txt
+/src/CTestTestfile.cmake
+/src/cmake_install.cmake
+/src/x64
