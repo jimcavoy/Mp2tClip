@@ -44,5 +44,6 @@ private:
 	PCRClock _pcrClock;
 	AccessUnit _previousAU;
 	AccessUnit _nextAU;
+	bool _labelChanged{ false };
 };
 

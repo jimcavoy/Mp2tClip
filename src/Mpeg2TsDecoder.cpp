@@ -126,6 +126,11 @@ void Mpeg2TsDecoder::onPacket(lcss::TransportPacket& pckt)
 				{
 					if (_nextAU.length() > 0)
 					{
+						if (_previousAU.length() != 0 && _previousAU != _nextAU)
+						{
+							_labelChanged = true;
+						}
+
 						_previousAU = _nextAU;
 					}
 					_nextAU.clear();
@@ -212,7 +217,7 @@ void Mpeg2TsDecoder::writePacket(lcss::TransportPacket& pckt)
 		return;
 	}
 
-	if (timeExpired() && _videoDecoder.hasKeyFrame())
+	if ( (timeExpired() || _labelChanged) && _videoDecoder.hasKeyFrame())
 	{
 		createClippedFile();
 		_ofile.write((const char*)_patPacket.data(), _patPacket.length());
@@ -222,6 +227,7 @@ void Mpeg2TsDecoder::writePacket(lcss::TransportPacket& pckt)
 		}
 		_duration = pcrTime + _cmdline.length();
 		_videoDecoder.reset();
+		_labelChanged = false;
 	}
 
 	if (size > 0)

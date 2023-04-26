@@ -89,3 +89,8 @@ void AccessUnit::clear()
 	pts_ = 0;
 	dts_ = 0;
 }
+
+bool AccessUnit::isEqual(const AccessUnit& rhs) const
+{
+	return this->sodb_ == rhs.sodb_;
+}
