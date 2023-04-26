@@ -63,7 +63,7 @@ namespace
 
 		_splitpath_s(path.c_str(), drive, dir, fname, ext);
 
-		sprintf_s(newfname, "%s_%03d%s", fname, count, ext);
+		sprintf_s(newfname, "%s_%05d%s", fname, count, ext);
 		ret = newfname;
 #else
 		char newfname[512]{};
@@ -76,7 +76,7 @@ namespace
 			fname[i] = c;
 			c = bname[i++];
 		}
-		sprintf(newfname, "%s_%03d%s", fname, count, ".ts");
+		sprintf(newfname, "%s_%05d%s", fname, count, ".ts");
 		ret = newfname;
 #endif
 		return ret;
@@ -116,6 +116,23 @@ void Mpeg2TsDecoder::onPacket(lcss::TransportPacket& pckt)
 				_pmtPackets.push_back(pckt);
 			}
 		}
+		else
+		{
+			lcss::PESPacket pes;
+			UINT16 bytesParsed = pes.parse(data);
+			if (bytesParsed > 0)
+			{
+				if (_pmtProxy.packetType(pckt.PID()) == PmtProxy::STREAM_TYPE::$EXI)
+				{
+					if (_nextAU.length() > 0)
+					{
+						_previousAU = _nextAU;
+					}
+					_nextAU.clear();
+					_nextAU.insert(data + bytesParsed, pckt.data_byte() - bytesParsed);
+				}
+			}
+		}
 		_ofile.flush();
 	}
 	else
@@ -129,6 +146,11 @@ void Mpeg2TsDecoder::onPacket(lcss::TransportPacket& pckt)
 				_pmtProxy.update(_pmt);
 			}
 			_pmtPackets.push_back(pckt);
+		}
+
+		if (_pmtProxy.packetType(pckt.PID()) == PmtProxy::STREAM_TYPE::$EXI)
+		{
+			_nextAU.insert(data, pckt.data_byte());
 		}
 	}
 
@@ -153,7 +175,7 @@ void Mpeg2TsDecoder::createClippedFile()
 	else
 	{
 		char newfname[_MAX_PATH]{};
-		sprintf(newfname, "%s_%03d%s", _cmdline.outputFilename().c_str(), _fileCount++, ".ts");
+		sprintf(newfname, "%s_%05d%s", _cmdline.outputFilename().c_str(), _fileCount++, ".ts");
 		fname = newfname;
 	}
 #ifdef _WIN32

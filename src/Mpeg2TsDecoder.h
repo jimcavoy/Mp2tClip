@@ -15,6 +15,7 @@
 #include "libmp2t.h"
 #include "PmtProxy.h"
 #include "PCRClock.h"
+#include "AccessUnit.h"
 
 class Mpeg2TsDecoder : public lcss::TSParser
 {
@@ -41,5 +42,7 @@ private:
 	PmtProxy _pmtProxy{};
 	VideoDecoder _videoDecoder{};
 	PCRClock _pcrClock;
+	AccessUnit _previousAU;
+	AccessUnit _nextAU;
 };
 

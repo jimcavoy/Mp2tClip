@@ -20,7 +20,7 @@ include(${CMAKE_INSTALL_LIBDIR}/lib/cmake/libmp2t/libmp2tTargets.cmake)
 include(${CMAKE_INSTALL_LIBDIR}/lib/cmake/libh264p/libh264pTargets.cmake)
 
 # Add source to this project's executable.
-add_executable (Mp2tClip "main.cpp" "CommandLineParser.cpp" "Mpeg2TsDecoder.cpp" "PCRClock.cpp" "PmtProxy.cpp" "VideoDecoder.cpp")
+add_executable (Mp2tClip "main.cpp" "CommandLineParser.cpp" "Mpeg2TsDecoder.cpp" "PCRClock.cpp" "PmtProxy.cpp" "VideoDecoder.cpp" "AccessUnit.cpp")
 
 list(APPEND EXTRA_LIBS lcss::libmp2t ThetaStream::libh264p)
 
