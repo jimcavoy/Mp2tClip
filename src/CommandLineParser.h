@@ -40,10 +40,21 @@ namespace ThetaStream
 		std::string outputDirectory() const;
 
 		/// <summary>
-		/// 
+		/// The base name for each clipped file.  By default, it
+		/// uses the input file name but if reading from stdin
+		/// the default base name is "clip".
 		/// </summary>
-		/// <returns></returns>
+		/// <returns>The base name of the clip file.</returns>
 		std::string outputFilename() const;
+
+		/// <summary>
+		/// A flag to tell the app to break when a confidentiality 
+		/// label changes.  The app will clip based on duration or
+		/// label change whenever comes first.
+		/// </summary>
+		/// <returns>Returns true to clip on a confidentiality label
+		/// change; otherwise false.</returns>
+		bool breakOnLabelChange() const;
 
 	private:
 		void swap(CommandLineParser& other);

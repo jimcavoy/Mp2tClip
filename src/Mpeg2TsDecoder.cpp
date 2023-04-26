@@ -126,7 +126,9 @@ void Mpeg2TsDecoder::onPacket(lcss::TransportPacket& pckt)
 				{
 					if (_nextAU.length() > 0)
 					{
-						if (_previousAU.length() != 0 && _previousAU != _nextAU)
+						if (_previousAU.length() != 0 && 
+							_previousAU != _nextAU && 
+							_cmdline.breakOnLabelChange())
 						{
 							_labelChanged = true;
 						}
