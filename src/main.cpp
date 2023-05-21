@@ -27,7 +27,7 @@ using namespace std;
 namespace fs = std::filesystem;
 
 #ifdef _WIN32
-int CtrlHandler(unsigned long fdwCtrlType);
+BOOL CtrlHandler(DWORD fdwCtrlType);
 Mpeg2TsDecoder* pDecoder;
 #endif
 std::shared_ptr<istream> openInputStream(const std::string& input);
@@ -47,6 +47,14 @@ int main(int argc, char* argv[])
 
 		size_t N = cmdline.filename() == "-" ? 7 * 188 : 49 * 188;
 		memblock.resize(N);
+
+#ifdef _WIN32
+		if (!SetConsoleCtrlHandler((PHANDLER_ROUTINE)CtrlHandler, TRUE)) {
+			const DWORD err = GetLastError();
+			std::cerr << "Failed to set console control handler.  Error Code = " << err << std::endl;
+			return err;
+		}
+#endif
 
 		Mpeg2TsDecoder decoder(cmdline);
 		pDecoder = &decoder;
@@ -75,7 +83,7 @@ int main(int argc, char* argv[])
 }
 
 #ifdef _WIN32
-int CtrlHandler(unsigned long fdwCtrlType)
+BOOL CtrlHandler(DWORD fdwCtrlType)
 {
 	switch (fdwCtrlType)
 	{
@@ -87,6 +95,7 @@ int CtrlHandler(unsigned long fdwCtrlType)
 	case CTRL_LOGOFF_EVENT:
 		pDecoder->close();
 		std::cerr << "Closing down, please wait" << std::endl;
+		Sleep(1000);
 		return TRUE;
 	default:
 		return FALSE;
