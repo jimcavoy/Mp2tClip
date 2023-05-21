@@ -9,10 +9,11 @@ using namespace std;
 const char* usage = "Usage: Mp2tClip <OPTIONS>";
 const char* opts = "  -s\tSource MPEG-2 TS file; otherwise, stdin.\n \
  -d\tClip duration in seconds. (default: 60 seconds)\n \
- -o\tOutput directory where application writes the clipped files. (default: clipped)\n \
+ -o\tOutput directory where the application writes the clipped files. (default: clipped)\n \
  -O\tOffset time when to start clipping in seconds. (default: 0 seconds)\n \
- -n\tThe base name for output clip file; otherwise, use the source file name.\n \
+ -n\tThe base name for the output clip file; otherwise, use the source file name.\n \
  \t  If stdin, use default name.  (default: clip) \n \
+ -b\tBreak when confidentiality label changes.\n \
  -?\tPrint this message.";
 
 
@@ -29,6 +30,7 @@ namespace ThetaStream
 		std::string _source{"-"};
 		std::string _output{"clipped"};
 		std::string _oname{"clip"};
+		bool _break{ false };
 	};
 }
 
@@ -83,6 +85,9 @@ void ThetaStream::CommandLineParser::parse(int argc, char** argv, const char* ap
 		case 'n':
 			_pimpl->_oname = *argv + 1;
 			break;
+		case 'b':
+			_pimpl->_break = true;
+			break;
 		case '?':
 		{
 			std::stringstream msg;
@@ -126,6 +131,11 @@ std::string ThetaStream::CommandLineParser::outputDirectory() const
 std::string ThetaStream::CommandLineParser::outputFilename() const
 {
 	return _pimpl->_oname;
+}
+
+bool ThetaStream::CommandLineParser::breakOnLabelChange() const
+{
+	return _pimpl->_break;
 }
 
 

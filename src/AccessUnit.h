@@ -36,6 +36,8 @@ public:
 
 	bool isKey() const { return isKey_; }
 	void toogleKey() { isKey_ = isKey_ ? false : true; }
+
+	bool isEqual(const AccessUnit& rhs) const;
 private:
 	sodb_type   sodb_{};
 	bool        isKey_{false};
@@ -47,3 +49,13 @@ public:
 	BYTE DTS[5]{};
 	UINT16 PES_packet_length_{0};
 };
+
+inline bool operator==(const AccessUnit& lhs, const AccessUnit& rhs)
+{
+	return lhs.isEqual(rhs);
+}
+
+inline bool operator!=(const AccessUnit& lhs, const AccessUnit& rhs)
+{
+	return !lhs.isEqual(rhs);
+}
