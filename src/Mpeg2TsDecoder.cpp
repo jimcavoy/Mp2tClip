@@ -89,6 +89,11 @@ Mpeg2TsDecoder::Mpeg2TsDecoder(const ThetaStream::CommandLineParser& cmdline)
 	createClippedFile();
 }
 
+Mpeg2TsDecoder::~Mpeg2TsDecoder()
+{
+	close();
+}
+
 void Mpeg2TsDecoder::onPacket(lcss::TransportPacket& pckt)
 {
 	const uint8_t* data = pckt.getData();
@@ -162,6 +167,14 @@ void Mpeg2TsDecoder::onPacket(lcss::TransportPacket& pckt)
 	}
 
 	writePacket(pckt);
+}
+
+void Mpeg2TsDecoder::close()
+{
+	if (_ofile.is_open())
+	{
+		_ofile.close();
+	}
 }
 
 void Mpeg2TsDecoder::createClippedFile()

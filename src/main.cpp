@@ -10,6 +10,7 @@
 
 #ifdef _WIN32
 #include <io.h>
+#include <Windows.h>
 #endif
 #include <cstdint>
 #include <fcntl.h>
@@ -20,10 +21,15 @@
 #include <vector>
 #include <sstream>
 
+
 using namespace ThetaStream;
 using namespace std;
 namespace fs = std::filesystem;
 
+#ifdef _WIN32
+int CtrlHandler(unsigned long fdwCtrlType);
+Mpeg2TsDecoder* pDecoder;
+#endif
 std::shared_ptr<istream> openInputStream(const std::string& input);
 void createOutputDir(const std::string& dirpath);
 
@@ -43,6 +49,7 @@ int main(int argc, char* argv[])
 		memblock.resize(N);
 
 		Mpeg2TsDecoder decoder(cmdline);
+		pDecoder = &decoder;
 		while (ifile->good())
 		{
 			ifile->read((char*)memblock.data(), N);
@@ -66,6 +73,26 @@ int main(int argc, char* argv[])
 
 	return 0;
 }
+
+#ifdef _WIN32
+int CtrlHandler(unsigned long fdwCtrlType)
+{
+	switch (fdwCtrlType)
+	{
+		// Handle the CTRL-C signal.
+	case CTRL_C_EVENT:
+	case CTRL_CLOSE_EVENT:
+	case CTRL_BREAK_EVENT:
+	case CTRL_SHUTDOWN_EVENT:
+	case CTRL_LOGOFF_EVENT:
+		pDecoder->close();
+		std::cerr << "Closing down, please wait" << std::endl;
+		return TRUE;
+	default:
+		return FALSE;
+	}
+}
+#endif
 
 std::shared_ptr<std::istream> openInputStream(const std::string& input)
 {

@@ -21,8 +21,11 @@ class Mpeg2TsDecoder : public lcss::TSParser
 {
 public:
 	Mpeg2TsDecoder(const ThetaStream::CommandLineParser& cmdline);
+	virtual ~Mpeg2TsDecoder();
 
 	void onPacket(lcss::TransportPacket& pckt) override;
+
+	void close();
 
 private:
 	void createClippedFile();
