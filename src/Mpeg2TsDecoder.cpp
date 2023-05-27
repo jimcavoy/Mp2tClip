@@ -1,10 +1,13 @@
 #include "Mpeg2TsDecoder.h"
 
-#ifndef _WIN32
+#ifdef _WIN32
+#include <Windows.h>
+#else
 #include <libgen.h>
 #endif // !_WIN32
 
 #include <cstdint>
+#include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <stdlib.h>
@@ -50,7 +53,23 @@ namespace
 		}
 	}
 
-	string MakeFilename(const string& path, int count)
+	std::string create_timestamp()
+	{
+#ifdef _WIN32
+		SYSTEMTIME lt;
+		char buffer[BUFSIZ]{};
+		GetLocalTime(&lt);
+
+		sprintf(buffer, "%d%02d%02d%02d%02d%02d%03d", lt.wYear, lt.wMonth, lt.wDay, lt.wHour, lt.wMinute, lt.wSecond, lt.wMilliseconds);
+
+		return std::string(buffer);
+#else
+		// To be implemented.
+		return string("ToBeImplemented.");
+#endif
+	}
+
+	string MakeFilename(const string& path)
 	{
 		string ret;
 #ifdef _WIN32
@@ -63,7 +82,8 @@ namespace
 
 		_splitpath_s(path.c_str(), drive, dir, fname, ext);
 
-		sprintf_s(newfname, "%s_%05d%s", fname, count, ext);
+		string ts = create_timestamp();
+		sprintf_s(newfname, "%s_%s%s", fname, ts.c_str(), ext);
 		ret = newfname;
 #else
 		char newfname[512]{};
@@ -76,7 +96,9 @@ namespace
 			fname[i] = c;
 			c = bname[i++];
 		}
-		sprintf(newfname, "%s_%05d%s", fname, count, ".ts");
+
+		string ts = create_timestamp();
+		sprintf(newfname, "%s_%05d%s", fname, ts.c_str(), ".ts");
 		ret = newfname;
 #endif
 		return ret;
@@ -190,12 +212,13 @@ void Mpeg2TsDecoder::createClippedFile()
 	string fname = _cmdline.outputFilename();
 	if (_cmdline.filename() != "-")
 	{
-		fname = MakeFilename(_cmdline.filename(), _fileCount++);
+		fname = MakeFilename(_cmdline.filename());
 	}
 	else
 	{
 		char newfname[_MAX_PATH]{};
-		sprintf(newfname, "%s_%05d%s", _cmdline.outputFilename().c_str(), _fileCount++, ".ts");
+		std::string ts = create_timestamp();
+		sprintf(newfname, "%s_%s%s", _cmdline.outputFilename().c_str(), ts.c_str(), ".ts");
 		fname = newfname;
 	}
 #ifdef _WIN32
