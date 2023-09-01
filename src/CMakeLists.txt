@@ -16,13 +16,32 @@ else()
     include_directories($ENV{HOME}/.vs/loki-lib/include)
 endif()
 
-include(${CMAKE_INSTALL_LIBDIR}/lib/cmake/libmp2t/libmp2tTargets.cmake)
-include(${CMAKE_INSTALL_LIBDIR}/lib/cmake/libh264p/libh264pTargets.cmake)
+if (CMAKE_VS_PLATFORM_NAME)
+    include_directories(../../mp2tp/libmp2t)
+    add_library(lcss::libmp2t STATIC IMPORTED)
+    set_target_properties(lcss::libmp2t PROPERTIES
+                 IMPORTED_LOCATION ../../mp2tp/libmp2t/Release/libmp2t.lib
+                 IMPORTED_LOCATION_DEBUG ../../mp2tp/libmp2t/Debug/libmp2t.lib
+                 IMPORTED_CONFIGURATIONS "RELEASE;DEBUG")
+    include_directories(../../h264p/libh264p)
+    add_library(ThetaStream::libh264p STATIC IMPORTED)
+    set_target_properties(ThetaStream::libh264p PROPERTIES
+                 IMPORTED_LOCATION ../../h264p/libh264p/Release/libh264p.lib
+                 IMPORTED_LOCATION_DEBUG ../../h264p/libh264p/Debug/libh264p.lib
+                 IMPORTED_CONFIGURATIONS "RELEASE;DEBUG")
+    add_compile_definitions(_ITERATOR_DEBUG_LEVEL=0)
+else ()
+    include(${CMAKE_INSTALL_LIBDIR}/lib/cmake/libmp2t/libmp2tTargets.cmake)
+    include(${CMAKE_INSTALL_LIBDIR}/lib/cmake/libh264p/libh264pTargets.cmake)
+endif()
 
 # Add source to this project's executable.
-add_executable (Mp2tClip "main.cpp" "CommandLineParser.cpp" "Mpeg2TsDecoder.cpp" "PCRClock.cpp" "PmtProxy.cpp" "VideoDecoder.cpp" "AccessUnit.cpp")
+file(GLOB SRC_LIST
+    *.h
+    *.cpp)
+add_executable (Mp2tClip ${SRC_LIST})
 
-list(APPEND EXTRA_LIBS lcss::libmp2t ThetaStream::libh264p)
+list(APPEND EXTRA_LIBS lcss::libmp2t ThetaStream::libh264p wsock32 ws2_32)
 
 target_link_libraries(Mp2tClip PUBLIC ${EXTRA_LIBS})
 
