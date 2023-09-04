@@ -1,52 +1,33 @@
 // mp2tclip.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
 
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
-
 #include "CommandLineParser.h"
-#include "Mpeg2TsDecoder.h"
+#include "Clipper.h"
+#include "Monitor.h"
 
 #ifdef _WIN32
 #include <io.h>
 #include <Windows.h>
 #endif
-#include <cstdint>
-#include <fcntl.h>
-#include <filesystem>
-#include <fstream>
+
 #include <iostream>
-#include <memory>
-#include <vector>
-#include <sstream>
-
-
-using namespace ThetaStream;
-using namespace std;
-namespace fs = std::filesystem;
+#include <thread>
 
 #ifdef _WIN32
 BOOL CtrlHandler(DWORD fdwCtrlType);
-Mpeg2TsDecoder* pDecoder;
+ThetaStream::Clipper* pClipper;
+ThetaStream::Monitor* pMonitor;
 #endif
-std::shared_ptr<istream> openInputStream(const std::string& input);
-void createOutputDir(const std::string& dirpath);
+
+using namespace ThetaStream;
+using namespace std;
 
 int main(int argc, char* argv[])
 {
-	std::vector<uint8_t> memblock{};
 	try
 	{
 		CommandLineParser cmdline;
 		cmdline.parse(argc, argv, "Mp2tClip");
-
-		shared_ptr<istream> ifile = openInputStream(cmdline.filename());
-		
-		createOutputDir(cmdline.outputDirectory());
-
-		size_t N = cmdline.filename() == "-" ? 7 * 188 : 49 * 188;
-		memblock.resize(N);
 
 #ifdef _WIN32
 		if (!SetConsoleCtrlHandler((PHANDLER_ROUTINE)CtrlHandler, TRUE)) {
@@ -55,18 +36,16 @@ int main(int argc, char* argv[])
 			return err;
 		}
 #endif
+		Clipper clipper(cmdline);
+		pClipper = &clipper;
+		Monitor monitor(clipper, cmdline.length());
+		pMonitor = &monitor;
 
-		Mpeg2TsDecoder decoder(cmdline);
-		pDecoder = &decoder;
-		while (ifile->good())
-		{
-			ifile->read((char*)memblock.data(), N);
-			const streamsize read = ifile->gcount();
-			if (read > 0)
-			{
-				decoder.parse(memblock.data(), (unsigned)read);
-			}
-		}
+		thread clipperThread(&Clipper::operator(), &clipper);
+		thread monitorThread(&Monitor::operator(), &monitor);
+
+		clipperThread.join();
+		monitorThread.join();
 	}
 	catch (std::exception & ex)
 	{
@@ -93,7 +72,8 @@ BOOL CtrlHandler(DWORD fdwCtrlType)
 	case CTRL_BREAK_EVENT:
 	case CTRL_SHUTDOWN_EVENT:
 	case CTRL_LOGOFF_EVENT:
-		pDecoder->close();
+		pClipper->stop();
+		pMonitor->stop();
 		std::cerr << "Closing down, please wait" << std::endl;
 		Sleep(1000);
 		return TRUE;
@@ -103,46 +83,4 @@ BOOL CtrlHandler(DWORD fdwCtrlType)
 }
 #endif
 
-std::shared_ptr<std::istream> openInputStream(const std::string& input)
-{
-	std::shared_ptr<std::istream> ifile;
-	if (input == "-")
-	{
-#ifdef _WIN32
-		_setmode(_fileno(stdin), _O_BINARY);
-#endif
-		ifile.reset(&cin, [](...) {});
-	}
-	else
-	{
-		ifstream* tsfile = new ifstream(input, ios::binary);
-		if (!tsfile->is_open())
-		{
-			std::stringstream msg;
-			msg << "Fail to open input file, " << input;
-			std::runtime_error ex(msg.str().c_str());
-			throw ex;
-		}
-		ifile.reset(tsfile);
-	}
-	return ifile;
-}
-
-void createOutputDir(const std::string& strDirname)
-{
-	std::error_code errc{};
-	auto curdir = fs::current_path();
-	fs::path dirname(strDirname);
-	fs::path dirpath = curdir / dirname;
-	if (!fs::exists(dirpath))
-	{
-		if (!fs::create_directory(dirpath, errc))
-		{
-			std::stringstream msg;
-			msg << "Fail to create output directory, " << strDirname;
-			std::runtime_error ex(msg.str().c_str());
-			throw ex;
-		}
-	}
-}
 
