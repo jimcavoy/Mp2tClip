@@ -276,6 +276,11 @@ void Mpeg2TsDecoder::writePacket(lcss::TransportPacket& pckt)
 		return;
 	}
 
+	if (!_ofile.is_open())
+	{
+		createClippedFile();
+	}
+
 	if ( (timeExpired() || _labelChanged) && _videoDecoder.hasKeyFrame())
 	{
 		createClippedFile();

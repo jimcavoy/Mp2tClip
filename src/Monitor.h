@@ -4,29 +4,24 @@
 
 namespace ThetaStream
 {
-	class CommandLineParser;
+	class Clipper;
 }
 
 namespace ThetaStream
 {
-	class Clipper
+	class Monitor
 	{
 	public:
-		Clipper(const ThetaStream::CommandLineParser& cmdline);
-		~Clipper();
+		Monitor(Clipper& clipper, int duration);
+		~Monitor();
 
-		void operator()();
+		void operator () ();
 
 		void stop();
-
-		void closeFile();
-
-		int bytes();
 
 	private:
 		class Impl;
 		std::unique_ptr<Impl> _pimpl;
-
 	};
 }
 

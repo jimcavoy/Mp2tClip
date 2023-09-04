@@ -12,6 +12,7 @@
 #include <Windows.h>
 #endif
 
+#include <atomic>
 #include <cstdint>
 #include <fcntl.h>
 #include <filesystem>
@@ -69,6 +70,7 @@ public:
 	std::shared_ptr<std::istream> _ifile;
 	std::vector<uint8_t> _memblock{};
 	size_t _memblockSize{};
+	std::atomic_int _bytes{};
 };
 
 ThetaStream::Clipper::Clipper(const ThetaStream::CommandLineParser& cmdline)
@@ -90,12 +92,29 @@ void ThetaStream::Clipper::operator()()
 		if (read > 0)
 		{
 			_pimpl->_decoder->parse(_pimpl->_memblock.data(), (unsigned)read);
+			_pimpl->_bytes += read;
 		}
 	}
+	_pimpl->_bytes = -1;
 }
 
 void ThetaStream::Clipper::stop()
 {
 	_pimpl->_run = false;
+	closeFile();
+}
+
+void ThetaStream::Clipper::closeFile()
+{
 	_pimpl->_decoder->close();
+}
+
+int ThetaStream::Clipper::bytes()
+{
+	int ret = _pimpl->_bytes;
+	if (ret >= 0)
+	{
+		_pimpl->_bytes = 0;
+	}
+	return ret;
 }

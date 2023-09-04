@@ -3,6 +3,7 @@
 
 #include "CommandLineParser.h"
 #include "Clipper.h"
+#include "Monitor.h"
 
 #ifdef _WIN32
 #include <io.h>
@@ -15,6 +16,7 @@
 #ifdef _WIN32
 BOOL CtrlHandler(DWORD fdwCtrlType);
 ThetaStream::Clipper* pClipper;
+ThetaStream::Monitor* pMonitor;
 #endif
 
 using namespace ThetaStream;
@@ -36,10 +38,14 @@ int main(int argc, char* argv[])
 #endif
 		Clipper clipper(cmdline);
 		pClipper = &clipper;
+		Monitor monitor(clipper, cmdline.length());
+		pMonitor = &monitor;
 
 		thread clipperThread(&Clipper::operator(), &clipper);
+		thread monitorThread(&Monitor::operator(), &monitor);
 
 		clipperThread.join();
+		monitorThread.join();
 	}
 	catch (std::exception & ex)
 	{
@@ -67,6 +73,7 @@ BOOL CtrlHandler(DWORD fdwCtrlType)
 	case CTRL_SHUTDOWN_EVENT:
 	case CTRL_LOGOFF_EVENT:
 		pClipper->stop();
+		pMonitor->stop();
 		std::cerr << "Closing down, please wait" << std::endl;
 		Sleep(1000);
 		return TRUE;
