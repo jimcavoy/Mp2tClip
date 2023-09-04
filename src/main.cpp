@@ -35,6 +35,7 @@ int main(int argc, char* argv[])
 		}
 #endif
 		Clipper clipper(cmdline);
+		pClipper = &clipper;
 
 		thread clipperThread(&Clipper::operator(), &clipper);
 

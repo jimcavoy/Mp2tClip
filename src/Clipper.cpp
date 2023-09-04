@@ -21,8 +21,6 @@
 #include <vector>
 #include <sstream>
 
-namespace fs = std::filesystem;
-
 namespace 
 {
 	std::shared_ptr<std::istream> openInputStream(const std::string& input)
@@ -50,24 +48,6 @@ namespace
 		}
 		return ifile;
 	}
-
-	void createOutputDir(const std::string& strDirname)
-	{
-		std::error_code errc{};
-		auto curdir = fs::current_path();
-		fs::path dirname(strDirname);
-		fs::path dirpath = curdir / dirname;
-		if (!fs::exists(dirpath))
-		{
-			if (!fs::create_directory(dirpath, errc))
-			{
-				std::stringstream msg;
-				msg << "Fail to create output directory, " << strDirname;
-				std::runtime_error ex(msg.str().c_str());
-				throw ex;
-			}
-		}
-	}
 }
 
 
@@ -78,7 +58,7 @@ public:
 		:_decoder(std::make_unique<Mpeg2TsDecoder>(cmdline))
 	{
 		_ifile = openInputStream(cmdline.filename());
-		createOutputDir(cmdline.outputDirectory());
+		
 		_memblockSize = cmdline.filename() == "-" ? 7 * 188 : 49 * 188;
 		_memblock.resize(_memblockSize);
 	}
@@ -103,7 +83,7 @@ ThetaStream::Clipper::~Clipper()
 
 void ThetaStream::Clipper::operator()()
 {
-	while (_pimpl->_ifile->good())
+	while (_pimpl->_ifile->good() && _pimpl->_run)
 	{
 		_pimpl->_ifile->read((char*)_pimpl->_memblock.data(), _pimpl->_memblockSize);
 		const std::streamsize read = _pimpl->_ifile->gcount();
@@ -117,4 +97,5 @@ void ThetaStream::Clipper::operator()()
 void ThetaStream::Clipper::stop()
 {
 	_pimpl->_run = false;
+	_pimpl->_decoder->close();
 }

@@ -7,12 +7,14 @@
 #endif // !_WIN32
 
 #include <cstdint>
+#include <filesystem>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <stdlib.h>
 
 using namespace std;
+namespace fs = std::filesystem;
 
 #ifdef _WIN32
 #define sprintf sprintf_s
@@ -103,11 +105,30 @@ namespace
 #endif
 		return ret;
 	}
+
+	void createOutputDir(const std::string& strDirname)
+	{
+		std::error_code errc{};
+		auto curdir = fs::current_path();
+		fs::path dirname(strDirname);
+		fs::path dirpath = curdir / dirname;
+		if (!fs::exists(dirpath))
+		{
+			if (!fs::create_directory(dirpath, errc))
+			{
+				std::stringstream msg;
+				msg << "Fail to create output directory, " << strDirname;
+				std::runtime_error ex(msg.str().c_str());
+				throw ex;
+			}
+		}
+	}
 }
 
 Mpeg2TsDecoder::Mpeg2TsDecoder(const ThetaStream::CommandLineParser& cmdline)
 	: _cmdline(cmdline)
 {
+	createOutputDir(cmdline.outputDirectory());
 	createClippedFile();
 }
 
