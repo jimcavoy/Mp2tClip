@@ -17,17 +17,17 @@ else()
 endif()
 
 if (CMAKE_VS_PLATFORM_NAME)
-    include_directories(../../mp2tp/libmp2t)
+    include_directories(../../../../lib/mp2tp/libmp2t)
     add_library(lcss::libmp2t STATIC IMPORTED)
     set_target_properties(lcss::libmp2t PROPERTIES
-                 IMPORTED_LOCATION ../../mp2tp/libmp2t/Release/libmp2t.lib
-                 IMPORTED_LOCATION_DEBUG ../../mp2tp/libmp2t/Debug/libmp2t.lib
+                 IMPORTED_LOCATION ../../../../lib/mp2tp/libmp2t/Release/libmp2t.lib
+                 IMPORTED_LOCATION_DEBUG ../../../../lib/mp2tp/libmp2t/Debug/libmp2t.lib
                  IMPORTED_CONFIGURATIONS "RELEASE;DEBUG")
-    include_directories(../../h264p/libh264p)
+    include_directories(../../../../lib/h264p/libh264p)
     add_library(ThetaStream::libh264p STATIC IMPORTED)
     set_target_properties(ThetaStream::libh264p PROPERTIES
-                 IMPORTED_LOCATION ../../h264p/libh264p/Release/libh264p.lib
-                 IMPORTED_LOCATION_DEBUG ../../h264p/libh264p/Debug/libh264p.lib
+                 IMPORTED_LOCATION ../../../../lib/h264p/libh264p/Release/libh264p.lib
+                 IMPORTED_LOCATION_DEBUG ../../../../lib/h264p/libh264p/Debug/libh264p.lib
                  IMPORTED_CONFIGURATIONS "RELEASE;DEBUG")
     add_compile_definitions(_ITERATOR_DEBUG_LEVEL=0)
 else ()

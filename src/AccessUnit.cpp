@@ -1,4 +1,3 @@
-#include "StdAfx.h"
 #include "AccessUnit.h"
 
 
@@ -10,7 +9,7 @@ AccessUnit::AccessUnit()
 {
 }
 
-AccessUnit::AccessUnit(const BYTE* sodb, unsigned int len)
+AccessUnit::AccessUnit(const uint8_t* sodb, unsigned int len)
 {
 	std::copy(sodb, sodb+len, std::back_inserter(sodb_));
 }
@@ -67,7 +66,7 @@ AccessUnit::~AccessUnit()
 
 }
 
-void AccessUnit::insert(const BYTE* sodb, unsigned int len)
+void AccessUnit::insert(const uint8_t* sodb, unsigned int len)
 {
 	sodb_.insert(sodb_.end(), &sodb[0], &sodb[len]);
 }
