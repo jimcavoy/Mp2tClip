@@ -1,5 +1,6 @@
 #pragma once
-#include "h264prsr.h"
+
+#include <h264p/h264prsr.h>
 
 class VideoDecoder :
 	public ThetaStream::H264Parser

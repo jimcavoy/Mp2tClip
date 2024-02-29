@@ -2,8 +2,9 @@
 
 #include "loki/Visitor.h"
 
-#include "nalu.h"
-#include "naluimpl.h"
+
+#include <h264p/nalu.h>
+#include <h264p/naluimpl.h>
 
 class IsKeyVisitor
 	:public Loki::BaseVisitor,

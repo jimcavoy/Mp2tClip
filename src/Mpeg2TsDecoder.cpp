@@ -212,7 +212,7 @@ void Mpeg2TsDecoder::onPacket(lcss::TransportPacket& pckt)
 	switch (_pmtProxy.packetType(pckt.PID()))
 	{
 	case PmtProxy::STREAM_TYPE::H264:
-		_videoDecoder.parse((const char*)pckt.data(), (uint32_t)pckt.length());
+		_videoDecoder.parse(pckt.data(), (uint32_t)pckt.length());
 		break;
 	}
 

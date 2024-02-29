@@ -8,11 +8,11 @@
 #include "VideoDecoder.h"
 
 #include <memory>
-#include <map>
 #include <fstream>
 #include <limits>
 
-#include "libmp2t.h"
+#include <mp2tp/libmp2tp.h>
+
 #include "PmtProxy.h"
 #include "PCRClock.h"
 #include "AccessUnit.h"
