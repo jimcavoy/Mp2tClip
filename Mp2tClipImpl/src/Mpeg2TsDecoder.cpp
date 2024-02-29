@@ -12,6 +12,8 @@
 #include <iostream>
 #include <sstream>
 #include <stdlib.h>
+#include <time.h>
+#include <cmath>
 
 using namespace std;
 namespace fs = std::filesystem;
@@ -57,18 +59,23 @@ namespace
 
 	std::string create_timestamp()
 	{
+		char buffer[128]{};
 #ifdef _WIN32
-		SYSTEMTIME lt;
-		char buffer[BUFSIZ]{};
+		SYSTEMTIME lt;		
 		GetLocalTime(&lt);
 
-		sprintf(buffer, "%d%02d%02d%02d%02d%02d%03d", lt.wYear, lt.wMonth, lt.wDay, lt.wHour, lt.wMinute, lt.wSecond, lt.wMilliseconds);
-
-		return std::string(buffer);
+		sprintf(buffer, "%d%02d%02d%02d%02d%02d%03d", lt.wYear, lt.wMonth, lt.wDay, lt.wHour, lt.wMinute, lt.wSecond, lt.wMilliseconds);		
 #else
-		// To be implemented.
-		return string("ToBeImplemented.");
+		struct timespec spec;
+		clock_gettime(CLOCK_REALTIME, &spec);
+		struct tm timeinfo;
+		localtime_r(&spec.tv_sec, &timeinfo);
+		long ms = round(spec.tv_nsec / 1.0e6);
+
+		sprintf(buffer, "%d%02d%02d%02d%02d%02d%03ld", 
+			timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec, ms);
 #endif
+		return std::string(buffer);
 	}
 
 	string MakeFilename(const string& path)
@@ -100,7 +107,7 @@ namespace
 		}
 
 		string ts = create_timestamp();
-		sprintf(newfname, "%s_%05d%s", fname, ts.c_str(), ".ts");
+		sprintf(newfname, "%s_%s%s", fname, ts.c_str(), ".ts");
 		ret = newfname;
 #endif
 		return ret;
