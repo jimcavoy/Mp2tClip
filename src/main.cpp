@@ -23,12 +23,22 @@ ThetaStream::Monitor* pMonitor;
 using namespace ThetaStream;
 using namespace std;
 
+void banner()
+{
+	std::cerr << "Mp2tClip: MPEG-2 TS Clipper Application v1.0.0" << std::endl;
+	std::cerr << "Copyright (c) 2024 ThetaStream Consulting, jimcavoy@thetastream.com" << std::endl;
+}
+
 int main(int argc, char* argv[])
 {
 	try
 	{
+		banner();
+
 		CommandLineParser cmdline;
 		cmdline.parse(argc, argv, "Mp2tClip");
+
+		std::cerr << std::endl << "Enter Ctrl-C to exit" << std::endl << std::endl;
 
 #ifdef _WIN32
 		if (!SetConsoleCtrlHandler((PHANDLER_ROUTINE)CtrlHandler, TRUE)) {
@@ -50,7 +60,7 @@ int main(int argc, char* argv[])
 	}
 	catch (std::exception & ex)
 	{
-		cerr << "Exception thrown: " << ex.what() << endl;
+		cerr << endl << ex.what() << endl;
 		return -1;
 	}
 	catch (...)
