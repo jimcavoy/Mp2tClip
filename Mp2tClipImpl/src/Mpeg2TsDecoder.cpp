@@ -61,10 +61,10 @@ namespace
 	{
 		char buffer[128]{};
 #ifdef _WIN32
-		SYSTEMTIME lt;		
+		SYSTEMTIME lt;
 		GetLocalTime(&lt);
 
-		sprintf(buffer, "%d%02d%02d%02d%02d%02d%03d", lt.wYear, lt.wMonth, lt.wDay, lt.wHour, lt.wMinute, lt.wSecond, lt.wMilliseconds);		
+		sprintf(buffer, "%d%02d%02d%02d%02d%02d%03d", lt.wYear, lt.wMonth, lt.wDay, lt.wHour, lt.wMinute, lt.wSecond, lt.wMilliseconds);
 #else
 		struct timespec spec;
 		clock_gettime(CLOCK_REALTIME, &spec);
@@ -72,7 +72,7 @@ namespace
 		localtime_r(&spec.tv_sec, &timeinfo);
 		long ms = round(spec.tv_nsec / 1.0e6);
 
-		sprintf(buffer, "%d%02d%02d%02d%02d%02d%03ld", 
+		sprintf(buffer, "%d%02d%02d%02d%02d%02d%03ld",
 			timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec, ms);
 #endif
 		return std::string(buffer);
@@ -181,8 +181,8 @@ void Mpeg2TsDecoder::onPacket(lcss::TransportPacket& pckt)
 				{
 					if (_nextAU.length() > 0)
 					{
-						if (_previousAU.length() != 0 && 
-							_previousAU != _nextAU && 
+						if (_previousAU.length() != 0 &&
+							_previousAU != _nextAU &&
 							_cmdline.breakOnLabelChange())
 						{
 							_labelChanged = true;
@@ -288,7 +288,7 @@ void Mpeg2TsDecoder::writePacket(lcss::TransportPacket& pckt)
 		createClippedFile();
 	}
 
-	if ( (timeExpired() || _labelChanged) && _videoDecoder.hasKeyFrame())
+	if ((timeExpired() || _labelChanged) && _videoDecoder.hasKeyFrame())
 	{
 		createClippedFile();
 		_ofile.write((const char*)_patPacket.data(), _patPacket.length());
