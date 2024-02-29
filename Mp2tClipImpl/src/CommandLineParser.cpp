@@ -1,8 +1,9 @@
-#include "CommandLineParser.h"
+#include <Mp2tClipImpl/CommandLineParser.h>
 
 #include <exception>
 #include <iostream>
 #include <sstream>
+#include <cstring>
 
 using namespace std;
 
@@ -71,20 +72,74 @@ void ThetaStream::CommandLineParser::parse(int argc, char** argv, const char* ap
 		switch (c)
 		{
 		case 's':
-			_pimpl->_source = *argv + 1;
+		{
+			if (strlen(*argv + 1) == 0)
+			{
+				_pimpl->_source = *++argv;
+				--argc;
+			}
+			else
+			{
+				_pimpl->_source = *argv + 1;
+			}
 			break;
+		}
 		case 'o':
-			_pimpl->_output = *argv + 1;
+		{
+			if (strlen(*argv + 1) == 0)
+			{
+				_pimpl->_output = *++argv;
+				--argc;
+			}
+			else
+			{
+				_pimpl->_output = *argv + 1;
+			}
 			break;
+		}
 		case 'd':
-			_pimpl->_duration = std::stoi(*argv + 1);
+		{
+			std::string dur;
+			if (strlen(*argv + 1) == 0)
+			{
+				dur = *++argv;
+				--argc;
+			}
+			else
+			{
+				dur = *argv + 1;
+			}
+			_pimpl->_duration = std::stoi(dur);
 			break;
+		}
 		case 'O':
-			_pimpl->_offset = std::stoi(*argv + 1);
+		{
+			std::string offset;
+			if (strlen(*argv + 1) == 0)
+			{
+				offset = *++argv;
+				--argc;
+			}
+			else
+			{
+				offset = *argv + 1;
+			}
+			_pimpl->_offset = std::stoi(offset);
 			break;
+		}
 		case 'n':
-			_pimpl->_oname = *argv + 1;
+		{
+			if (strlen(*argv + 1) == 0)
+			{
+				_pimpl->_oname = *++argv;
+				--argc;
+			}
+			else
+			{
+				_pimpl->_oname = *argv + 1;
+			}
 			break;
+		}
 		case 'b':
 			_pimpl->_break = true;
 			break;

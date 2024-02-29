@@ -1,6 +1,7 @@
-#include "Clipper.h"
+#include <Mp2tClipImpl/Clipper.h>
 
-#include "CommandLineParser.h"
+#include <Mp2tClipImpl/CommandLineParser.h>
+
 #include "Mpeg2TsDecoder.h"
 
 #ifndef NOMINMAX

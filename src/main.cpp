@@ -1,9 +1,10 @@
 // mp2tclip.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
 
-#include "CommandLineParser.h"
-#include "Clipper.h"
-#include "Monitor.h"
+#include <Mp2tClipImpl/CommandLineParser.h>
+#include <Mp2tClipImpl/Clipper.h>
+#include <Mp2tClipImpl/Monitor.h>
+
 
 #ifdef _WIN32
 #include <io.h>
@@ -15,19 +16,30 @@
 
 #ifdef _WIN32
 BOOL CtrlHandler(DWORD fdwCtrlType);
+#endif
+
 ThetaStream::Clipper* pClipper;
 ThetaStream::Monitor* pMonitor;
-#endif
 
 using namespace ThetaStream;
 using namespace std;
+
+void banner()
+{
+	std::cerr << "Mp2tClip: MPEG-2 TS Clipper Application v1.0.0" << std::endl;
+	std::cerr << "Copyright (c) 2024 ThetaStream Consulting, jimcavoy@thetastream.com" << std::endl;
+}
 
 int main(int argc, char* argv[])
 {
 	try
 	{
+		banner();
+
 		CommandLineParser cmdline;
 		cmdline.parse(argc, argv, "Mp2tClip");
+
+		std::cerr << std::endl << "Enter Ctrl-C to exit" << std::endl << std::endl;
 
 #ifdef _WIN32
 		if (!SetConsoleCtrlHandler((PHANDLER_ROUTINE)CtrlHandler, TRUE)) {
@@ -49,7 +61,7 @@ int main(int argc, char* argv[])
 	}
 	catch (std::exception & ex)
 	{
-		cerr << "Exception thrown: " << ex.what() << endl;
+		cerr << endl << ex.what() << endl;
 		return -1;
 	}
 	catch (...)

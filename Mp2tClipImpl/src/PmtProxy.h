@@ -1,7 +1,7 @@
 #pragma once
 #include <map>
 
-#include "libmp2t.h"
+#include <mp2tp/libmp2tp.h>
 
 class PmtProxy
 {
