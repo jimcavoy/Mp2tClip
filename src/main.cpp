@@ -1,9 +1,10 @@
 // mp2tclip.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
 
-#include "CommandLineParser.h"
-#include "Clipper.h"
-#include "Monitor.h"
+#include <Mp2tClipImpl/CommandLineParser.h>
+#include <Mp2tClipImpl/Clipper.h>
+#include <Mp2tClipImpl/Monitor.h>
+
 
 #ifdef _WIN32
 #include <io.h>

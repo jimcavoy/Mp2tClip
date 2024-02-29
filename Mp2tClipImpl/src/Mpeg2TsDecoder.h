@@ -4,7 +4,7 @@
 #define NOMINMAX
 #endif
 
-#include "CommandLineParser.h"
+#include <Mp2tClipImpl/CommandLineParser.h>
 #include "VideoDecoder.h"
 
 #include <memory>

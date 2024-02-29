@@ -1,7 +1,6 @@
 #include "VideoDecoder.h"
 
-#include "loki/Visitor.h"
-
+#include <loki/Visitor.h>
 
 #include <h264p/nalu.h>
 #include <h264p/naluimpl.h>

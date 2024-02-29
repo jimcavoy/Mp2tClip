@@ -11,22 +11,14 @@ project(Mp2tClip
 
 include (GNUInstallDirs)
 
-find_package(mp2tp 1 CONFIG REQUIRED)
-find_package(h264p 1 CONFIG REQUIRED)
-
-include_directories(../loki-lib/include)
+add_subdirectory (Mp2tClipImpl)
 
 add_executable (Mp2tClip)
 
 # Add source to this project's executable.
-file(GLOB SRC_LIST src/*.cpp)
-target_sources (Mp2tClip PRIVATE ${SRC_LIST})
+target_sources (Mp2tClip PRIVATE src/main.cpp)
 
-if (WIN32)
-	set(WS wsock32 ws2_32)
-endif()
-
-target_link_libraries(Mp2tClip PRIVATE lcss::mp2tp thetastream::h264p ${WS})
+target_link_libraries(Mp2tClip PRIVATE Mp2tClipImpl)
 
 # define the C++ standard needed to compile this library and make it visible to
 # dependers
