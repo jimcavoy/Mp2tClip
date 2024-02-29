@@ -16,9 +16,10 @@
 
 #ifdef _WIN32
 BOOL CtrlHandler(DWORD fdwCtrlType);
+#endif
+
 ThetaStream::Clipper* pClipper;
 ThetaStream::Monitor* pMonitor;
-#endif
 
 using namespace ThetaStream;
 using namespace std;
