@@ -6,21 +6,26 @@ The MPEG-2 TS Clipper __Mp2tClip__ depends on multiple projects.  To build this 
 
 1. Clone `mp2tp` library, https://github.com/jimcavoy/mp2tp.git.  Build and install the library.
 2. Clone `h264p` library, https://github.com/jimcavoy/h264p.git.  Build and install the library.
-3. Clone `Loki` library, https://github.com/snaewe/loki-lib.git in the same directory as this project was cloned.
-4. To configure, build and install __Mp2tClip__ application, change directory (cd) into the Mp2tClip folder and do the following:
-   
-> cmake -S . -B ./build
-> 
-> cmake --build ./build
-> 
-> cmake --install ./build
+3. To configure, build and install __Mp2tClip__ application, change directory (cd) into the Mp2tClip folder and do the following:
+
+a. Generate build environment
+
+    cmake -S . -B ./build
+    
+b. Build application
+
+    cmake --build ./build
+
+c. Install application
+
+    cmake --install ./build
 
 The application is can be build and run on both Windows and Linux platforms.
 
 ### Test
 After you build the application, you can run a test case by running the following:
 
-> ctest --test-dir ./build
+    ctest --test-dir ./build
 
 ## Usage
  Usage: Mp2tClip \<OPTIONS\>
@@ -47,7 +52,7 @@ Help Options:
 ### Example
 Clip a MPEG-2 TS file, `~/Videos/SomeVideo.ts`, into two minute (120 seconds) clips and place them in `~/tmp/myclippedfolder`
 
-> Mp2tClip -s ~/Videos/SomeVideo.ts -d 120 -o ~/tmp/myclippedfolder
+    Mp2tClip -s ~/Videos/SomeVideo.ts -d 120 -o ~/tmp/myclippedfolder
 
 
   
