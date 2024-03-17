@@ -10,26 +10,60 @@ project (
 find_package(mp2tp 1 CONFIG REQUIRED)
 find_package(h264p 1 CONFIG REQUIRED)
 
-include_directories(../../loki-lib/include)
+# include the module `ExternalProject`
+include(ExternalProject)
+
+# Add an external project from a downloaded source archive
+ExternalProject_Add(loki-lib
+  URL https://github.com/snaewe/loki-lib/archive/refs/tags/Release_0_1_5.tar.gz
+  URL_HASH MD5=74e60c683f745dc15c6e772927349483
+  CONFIGURE_COMMAND ""
+  BUILD_COMMAND ""
+  INSTALL_COMMAND ""
+)
+
+ExternalProject_Get_Property(loki-lib SOURCE_DIR)
+
+set(LOKI_DIR "${SOURCE_DIR}")
 
 add_library(Mp2tClipImpl STATIC)
 
-file(GLOB SRC_LIST src/*.cpp)
-
-target_sources(Mp2tClipImpl PRIVATE ${SRC_LIST})
+target_sources(Mp2tClipImpl
+  PRIVATE
+    include/Mp2tClipImpl/Clipper.h
+    include/Mp2tClipImpl/CommandLineParser.h
+    include/Mp2tClipImpl/Monitor.h
+    src/AccessUnit.cpp
+    src/AccessUnit.h
+    src/Clipper.cpp
+    src/CommandLineParser.cpp
+    src/Monitor.cpp
+    src/Mpeg2TsDecoder.cpp
+    src/Mpeg2TsDecoder.h
+    src/PCRClock.cpp
+    src/PCRClock.h
+    src/PmtProxy.cpp
+    src/PmtProxy.h
+    src/VideoDecoder.cpp
+    src/VideoDecoder.h
+)
 
 set_property(TARGET Mp2tClipImpl PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 target_compile_features(Mp2tClipImpl PUBLIC cxx_std_17)
 
 if(WIN32)
-    set(WS wsock32 ws2_32)
+    target_link_libraries(Mp2tClipImpl lcss::mp2tp thetastream::h264p wsock32 ws2_32)
+else()
+    target_link_libraries(Mp2tClipImpl lcss::mp2tp thetastream::h264p)
 endif()
 
-target_link_libraries(Mp2tClipImpl lcss::mp2tp thetastream::h264p ${WS})
 
-target_include_directories(
-    Mp2tClipImpl
-    PRIVATE src/Mp2tClipImpl 
-    PUBLIC include
+
+target_include_directories( Mp2tClipImpl
+  PRIVATE 
+    src/Mp2tClipImpl
+  PUBLIC 
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${LOKI_DIR}/include>
 )

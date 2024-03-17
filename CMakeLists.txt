@@ -28,7 +28,7 @@ target_compile_features(
 )
 
 # Install targets
-install(TARGETS Mp2tClip )
+install(TARGETS Mp2tClip)
 
 # Test cases
 enable_testing()
