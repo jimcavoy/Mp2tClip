@@ -8,12 +8,9 @@
 
 #include <cstdint>
 #include <filesystem>
-#include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <stdlib.h>
-#include <time.h>
-#include <cmath>
 
 using namespace std;
 namespace fs = std::filesystem;
@@ -23,6 +20,8 @@ namespace fs = std::filesystem;
 #else
 #define _MAX_PATH 512
 #endif
+
+const uint64_t RESOLUTION = 27'000'000; // 27MHz
 
 namespace
 {
@@ -275,8 +274,8 @@ void Mpeg2TsDecoder::createClippedFile()
 void Mpeg2TsDecoder::writePacket(lcss::TransportPacket& pckt)
 {
     const size_t size = pckt.length();
-    const UINT32 offset = _cmdline.offset();
-    const double pcrTime = _pcrClock.timeInSeconds();
+    const uint64_t offset = _cmdline.offset() * RESOLUTION;
+    const uint64_t pcrTime = _pcrClock.time();
 
     if (offset > 0 && offset > pcrTime)
     {
@@ -296,7 +295,7 @@ void Mpeg2TsDecoder::writePacket(lcss::TransportPacket& pckt)
         {
             _ofile.write((const char*)p.data(), p.length());
         }
-        _duration = pcrTime + _cmdline.length();
+        _duration = pcrTime + length();
         _videoDecoder.reset();
         _labelChanged = false;
     }
@@ -319,9 +318,9 @@ void Mpeg2TsDecoder::updateClock(const lcss::TransportPacket& pckt)
             adf->getPCR(pcr);
             _pcrClock.setTime(pcr);
 
-            if (_duration == std::numeric_limits<double>::max() && _cmdline.offset() < _pcrClock.timeInSeconds())
+            if (_duration == std::numeric_limits<uint64_t>::max() && (_cmdline.offset() * RESOLUTION) < _pcrClock.time())
             {
-                _duration = _pcrClock.timeInSeconds() + _cmdline.length();
+                _duration = _pcrClock.time() + length();
             }
         }
     }
@@ -334,11 +333,17 @@ bool Mpeg2TsDecoder::timeExpired() const
         return false;
     }
 
-    double diff = abs(_duration - _pcrClock.timeInSeconds());
-    if (diff < 0.5)
+    long diff = _duration - _pcrClock.time();
+    diff = abs(diff);
+    if (diff < 900'000)
     {
         return true;
     }
     return false;
+}
+
+uint64_t Mpeg2TsDecoder::length() const
+{
+    return (_cmdline.length() + 1) * RESOLUTION;
 }
 
