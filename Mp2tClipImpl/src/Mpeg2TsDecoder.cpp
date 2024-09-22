@@ -133,6 +133,8 @@ namespace
 
 Mpeg2TsDecoder::Mpeg2TsDecoder(const ThetaStream::CommandLineParser& cmdline)
     : _cmdline(cmdline)
+    , _length((cmdline.length() + 1) * RESOLUTION)
+    , _offset(cmdline.offset() * RESOLUTION)
 {
     createOutputDir(cmdline.outputDirectory());
     createClippedFile();
@@ -274,10 +276,9 @@ void Mpeg2TsDecoder::createClippedFile()
 void Mpeg2TsDecoder::writePacket(lcss::TransportPacket& pckt)
 {
     const size_t size = pckt.length();
-    const uint64_t offset = _cmdline.offset() * RESOLUTION;
     const uint64_t pcrTime = _pcrClock.time();
 
-    if (offset > 0 && offset > pcrTime)
+    if (_offset > 0 && _offset > pcrTime)
     {
         return;
     }
@@ -295,7 +296,7 @@ void Mpeg2TsDecoder::writePacket(lcss::TransportPacket& pckt)
         {
             _ofile.write((const char*)p.data(), p.length());
         }
-        _duration = pcrTime + length();
+        _duration = pcrTime + _length;
         _videoDecoder.reset();
         _labelChanged = false;
     }
@@ -318,9 +319,9 @@ void Mpeg2TsDecoder::updateClock(const lcss::TransportPacket& pckt)
             adf->getPCR(pcr);
             _pcrClock.setTime(pcr);
 
-            if (_duration == std::numeric_limits<uint64_t>::max() && (_cmdline.offset() * RESOLUTION) < _pcrClock.time())
+            if (_duration == std::numeric_limits<uint64_t>::max() && _offset < _pcrClock.time())
             {
-                _duration = _pcrClock.time() + length();
+                _duration = _pcrClock.time() + _length;
             }
         }
     }
@@ -342,8 +343,4 @@ bool Mpeg2TsDecoder::timeExpired() const
     return false;
 }
 
-uint64_t Mpeg2TsDecoder::length() const
-{
-    return (_cmdline.length() + 1) * RESOLUTION;
-}
 

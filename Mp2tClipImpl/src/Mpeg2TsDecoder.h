@@ -31,7 +31,6 @@ private:
     void writePacket(lcss::TransportPacket& pckt);
     void updateClock(const lcss::TransportPacket& pckt);
     bool timeExpired() const;
-    uint64_t length() const;
 
 private:
     const ThetaStream::CommandLineParser& _cmdline;
@@ -48,5 +47,7 @@ private:
     AccessUnit _previousAU;
     AccessUnit _nextAU;
     bool _labelChanged{ false };
+    uint64_t _length{};
+    uint64_t _offset{};
 };
 
