@@ -43,10 +43,18 @@ Options:
   -?    Print this message.
 ```
 
-### Example
-Clip a MPEG-2 TS file, `~/Videos/SomeVideo.ts`, into two minute (120 seconds) clips and place them in `~/tmp/myclippedfolder`
+## Examples
 
-    Mp2tClip -s ~/Videos/SomeVideo.ts -d 120 -o ~/tmp/myclippedfolder
+### 1. Clipping a File
+Clip a MPEG-2 TS file, `~/Videos/SomeVideo.ts`, into two minute (120 seconds) clips and place them in `~/tmp/myclippedfolder`.
 
+```
+Mp2tClip -s ~/Videos/SomeVideo.ts -d 120 -o ~/tmp/myclippedfolder
+```
 
-  
+### 2. Clipping a Stream
+Pipe a stream into __Mp2pClip__ to create two minute clips and place them in `~/tmp/myclippedfolder`.
+
+```
+StreamingApp | Mp2tClip -d 120 -o ~/tmp/myclippedfolder
+```
