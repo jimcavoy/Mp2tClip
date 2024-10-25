@@ -11,6 +11,7 @@
 #include <iostream>
 #include <sstream>
 #include <stdlib.h>
+#include <math.h>
 
 using namespace std;
 namespace fs = std::filesystem;
