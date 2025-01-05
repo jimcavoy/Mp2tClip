@@ -10,21 +10,18 @@ project (
 find_package(mp2tp 1 CONFIG REQUIRED)
 find_package(h264p 1 CONFIG REQUIRED)
 
-# include the module `ExternalProject`
-include(ExternalProject)
+# include the module `FetchContent`
+include(FetchContent)
 
 # Add an external project from a downloaded source archive
-ExternalProject_Add(loki-lib
+FetchContent_Declare(loki-lib
   URL https://github.com/snaewe/loki-lib/archive/refs/tags/Release_0_1_5.tar.gz
   URL_HASH MD5=74e60c683f745dc15c6e772927349483
-  CONFIGURE_COMMAND ""
-  BUILD_COMMAND ""
-  INSTALL_COMMAND ""
 )
+FetchContent_MakeAvailable(loki-lib)
+FetchContent_GetProperties(loki-lib)
 
-ExternalProject_Get_Property(loki-lib SOURCE_DIR)
-
-set(LOKI_DIR "${SOURCE_DIR}")
+set(LOKI_DIR "${loki-lib_SOURCE_DIR}")
 
 add_library(Mp2tClipImpl STATIC)
 
