@@ -4,7 +4,7 @@
 cmake_minimum_required (VERSION 3.21)
 
 project(Mp2tClip
-	VERSION 1.0.0
+	VERSION 1.0.1
 	DESCRIPTION "A command line program that decompose (clips) a MPEG-2 TS file/stream into multiple files."
 	LANGUAGES CXX
 )

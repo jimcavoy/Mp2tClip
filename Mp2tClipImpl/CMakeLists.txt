@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.21.0)
 
 project (
     Mp2tClipImpl
-    VERSION 1.0.0
+    VERSION 1.0.1
     DESCRIPTION "The core code for the Mp2tClip application."
     LANGUAGES CXX
 )
