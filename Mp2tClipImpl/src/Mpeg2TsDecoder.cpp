@@ -179,7 +179,8 @@ void Mpeg2TsDecoder::onPacket(lcss::TransportPacket& pckt)
             UINT16 bytesParsed = pes.parse(data);
             if (bytesParsed > 0)
             {
-                if (_pmtProxy.packetType(pckt.PID()) == PmtProxy::STREAM_TYPE::$EXI)
+                if (_pmtProxy.packetType(pckt.PID()) == PmtProxy::STREAM_TYPE::$EXI
+                    || _pmtProxy.packetType(pckt.PID()) == PmtProxy::STREAM_TYPE::$XML)
                 {
                     if (_nextAU.length() > 0)
                     {
@@ -212,7 +213,8 @@ void Mpeg2TsDecoder::onPacket(lcss::TransportPacket& pckt)
             _pmtPackets.push_back(pckt);
         }
 
-        if (_pmtProxy.packetType(pckt.PID()) == PmtProxy::STREAM_TYPE::$EXI)
+        if (_pmtProxy.packetType(pckt.PID()) == PmtProxy::STREAM_TYPE::$EXI
+            || _pmtProxy.packetType(pckt.PID()) == PmtProxy::STREAM_TYPE::$XML)
         {
             _nextAU.insert(data, pckt.data_byte());
         }

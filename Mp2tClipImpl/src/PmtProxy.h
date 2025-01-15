@@ -6,31 +6,32 @@
 class PmtProxy
 {
 public:
-	enum class STREAM_TYPE
-	{
-		UNKNOWN,
-		H264,
-		H265,
-		HDMV,
-		VIDEO,
-		AUDIO,
-		KLVA,
-		$EXI
-	};
+    enum class STREAM_TYPE
+    {
+        UNKNOWN,
+        H264,
+        H265,
+        HDMV,
+        VIDEO,
+        AUDIO,
+        KLVA,
+        $EXI,
+        $XML
+    };
 
 private:
-	typedef std::map<unsigned short, PmtProxy::STREAM_TYPE> map_type;
+    typedef std::map<unsigned short, PmtProxy::STREAM_TYPE> map_type;
 
 public:
-	void update(const lcss::ProgramMapTable& pmt);
-	STREAM_TYPE packetType(unsigned short pid);
-	bool isEmpty() const noexcept
-	{
-		return _pid2type.empty();
-	}
+    void update(const lcss::ProgramMapTable& pmt);
+    STREAM_TYPE packetType(unsigned short pid);
+    bool isEmpty() const noexcept
+    {
+        return _pid2type.empty();
+    }
 
 private:
-	map_type _pid2type{};
-	BYTE _version{0xFF};
+    map_type _pid2type{};
+    BYTE _version{ 0xFF };
 };
 
