@@ -13,8 +13,8 @@ const char* opts = "  -s\tSource MPEG-2 TS file; otherwise, stdin.\n \
  -o\tOutput directory where the application writes the clipped files. (default: clipped)\n \
  -O\tOffset time when to start clipping in seconds. (default: 0 seconds)\n \
  -n\tThe base name for the output clip file; otherwise, use the source file name.\n \
- \t  If stdin, use default name.  (default: clip) \n \
- -b\tBreak when confidentiality label changes.\n \
+ \t  If stdin, use the default name.  (default: clip) \n \
+ -b\tBreak when the confidentiality label changes.\n \
  -?\tPrint this message.";
 
 
