@@ -9,6 +9,8 @@
 #ifdef _WIN32
 #include <io.h>
 #include <Windows.h>
+#else
+#include <syslog.h>
 #endif
 
 #include <iostream>
@@ -32,6 +34,8 @@ void banner()
 
 int main(int argc, char* argv[])
 {
+	int retcode = 0;
+
 	try
 	{
 		banner();
@@ -56,21 +60,39 @@ int main(int argc, char* argv[])
 		thread clipperThread(&Clipper::operator(), &clipper);
 		thread monitorThread(&Monitor::operator(), &monitor);
 
+#ifdef linux
+		openlog("Mp2tClip", LOG_PID|LOG_CONS, LOG_USER);
+		syslog(LOG_NOTICE, "MPEG-2 TS Clipper Started.");
+#endif
+
 		clipperThread.join();
 		monitorThread.join();
 	}
 	catch (std::exception & ex)
 	{
 		cerr << endl << ex.what() << endl;
-		return -1;
+#ifdef linux
+		syslog(LOG_ERR, "ERROR: %s", ex.what());
+#endif
+		retcode = -1;
+		goto cleanup;
 	}
 	catch (...)
 	{
-		cerr << "Unknown exception thrown" << endl;
-		return -1;
+		cerr << "Unknown exception caught." << endl;
+#ifdef linux
+		syslog(LOG_ERR, "ERROR: Unknown exception caught.");
+#endif
+		retcode = -1;
+		goto cleanup;
 	}
 
-	return 0;
+cleanup:
+#ifdef linux
+	syslog(LOG_NOTICE, "MPEG-2 TS Clipped Closed.");
+	closelog();
+#endif
+	return retcode;
 }
 
 #ifdef _WIN32

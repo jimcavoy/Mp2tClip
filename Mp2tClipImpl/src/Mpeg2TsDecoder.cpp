@@ -4,6 +4,7 @@
 #include <Windows.h>
 #else
 #include <libgen.h>
+#include <syslog.h>
 #endif // !_WIN32
 
 #include <cstdint>
@@ -274,6 +275,9 @@ void Mpeg2TsDecoder::createClippedFile()
         throw exp;
     }
     cerr << "Created clipped file " << fname << endl;
+#ifdef linux
+    syslog(LOG_NOTICE, "Created clipped file, %s", fname.c_str());
+#endif
 }
 
 void Mpeg2TsDecoder::writePacket(lcss::TransportPacket& pckt)
