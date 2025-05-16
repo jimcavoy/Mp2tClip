@@ -28,7 +28,7 @@ using namespace std;
 
 void banner()
 {
-	std::cerr << "Mp2tClip: MPEG-2 TS Clipper Application v1.0.1" << std::endl;
+	std::cerr << "Mp2tClip: MPEG-2 TS Clipper Application v1.0.2" << std::endl;
 	std::cerr << "Copyright (c) 2025 ThetaStream Consulting, jimcavoy@thetastream.com" << std::endl;
 }
 
