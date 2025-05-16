@@ -30,17 +30,21 @@ ctest --test-dir ./build
 
 ## Usage
 ```
+Mp2tClip: MPEG-2 TS Clipper Application v1.0.2
+Copyright (c) 2025 ThetaStream Consulting, jimcavoy@thetastream.com
+
 Usage: Mp2tClip <OPTIONS>
 
-Options:
-  -s    Source MPEG-2 TS file; otherwise, stdin.
-  -d    Clip duration in seconds. (default: 60 seconds)
-  -o    Output directory where the application writes the clipped files. (default: clipped)
-  -O    Offset time when to start clipping in seconds. (default: 0 seconds)
-  -n    The base name for the output clip file; otherwise, use the source file name.
-          If stdin, use the default name.  (default: clip)
-  -b    Break when the confidentiality label changes.
-  -?    Print this message.
+Options: 
+  -s	Source MPEG-2 TS file; otherwise, stdin.
+  -d	Clip duration in seconds. (default: 60 seconds)
+  -o	Output directory where the application writes the clipped files. (default: clipped)
+  -O	Offset time when to start clipping in seconds. (default: 0 seconds)
+  -n	The base name for the output clip file; otherwise, use the source file name.
+  	  If stdin, use the default name.  (default: clip) 
+  -b	Break when the confidentiality label changes.
+  -?	Print this message.
+
 ```
 
 ## Examples
