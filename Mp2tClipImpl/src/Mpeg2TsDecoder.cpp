@@ -135,11 +135,10 @@ namespace
 
 Mpeg2TsDecoder::Mpeg2TsDecoder(const ThetaStream::CommandLineParser& cmdline)
     : _cmdline(cmdline)
-    , _length((cmdline.length() + 1) * RESOLUTION)
+    , _length((cmdline.length()) * RESOLUTION)
     , _offset(cmdline.offset() * RESOLUTION)
 {
     createOutputDir(cmdline.outputDirectory());
-    createClippedFile();
 }
 
 Mpeg2TsDecoder::~Mpeg2TsDecoder()
@@ -183,19 +182,19 @@ void Mpeg2TsDecoder::onPacket(lcss::TransportPacket& pckt)
                 if (_pmtProxy.packetType(pckt.PID()) == PmtProxy::STREAM_TYPE::$EXI
                     || _pmtProxy.packetType(pckt.PID()) == PmtProxy::STREAM_TYPE::$XML)
                 {
-                    if (_nextAU.length() > 0)
+                    if (_nextLabelAU.length() > 0)
                     {
-                        if (_previousAU.length() != 0 &&
-                            _previousAU != _nextAU &&
+                        if (_previousLabelAU.length() != 0 &&
+                            _previousLabelAU != _nextLabelAU &&
                             _cmdline.breakOnLabelChange())
                         {
-                            _labelChanged = true;
+                            onCreateClip();
                         }
 
-                        _previousAU = _nextAU;
+                        _previousLabelAU = _nextLabelAU;
                     }
-                    _nextAU.clear();
-                    _nextAU.insert(data + bytesParsed, pckt.data_byte() - bytesParsed);
+                    _nextLabelAU.clear();
+                    _nextLabelAU.insert(data + bytesParsed, pckt.data_byte() - bytesParsed);
                 }
             }
         }
@@ -217,7 +216,7 @@ void Mpeg2TsDecoder::onPacket(lcss::TransportPacket& pckt)
         if (_pmtProxy.packetType(pckt.PID()) == PmtProxy::STREAM_TYPE::$EXI
             || _pmtProxy.packetType(pckt.PID()) == PmtProxy::STREAM_TYPE::$XML)
         {
-            _nextAU.insert(data, pckt.data_byte());
+            _nextLabelAU.insert(data, pckt.data_byte());
         }
     }
 
@@ -296,19 +295,6 @@ void Mpeg2TsDecoder::writePacket(lcss::TransportPacket& pckt)
         createClippedFile();
     }
 
-    if ((timeExpired() || _labelChanged) && _videoDecoder.hasKeyFrame())
-    {
-        createClippedFile();
-        _ofile.write((const char*)_patPacket.data(), _patPacket.length());
-        for (const auto& p : _pmtPackets)
-        {
-            _ofile.write((const char*)p.data(), p.length());
-        }
-        _duration = pcrTime + _length;
-        _videoDecoder.reset();
-        _labelChanged = false;
-    }
-
     if (size > 0)
     {
         _ofile.write((const char*)pckt.data(), size);
@@ -333,22 +319,39 @@ void Mpeg2TsDecoder::updateClock(const lcss::TransportPacket& pckt)
             }
         }
     }
+
+    timeExpired();
 }
 
-bool Mpeg2TsDecoder::timeExpired() const
+bool Mpeg2TsDecoder::timeExpired()
 {
-    if (_duration == std::numeric_limits<double>::max())
+    if (_duration == std::numeric_limits<uint64_t>::max())
     {
         return false;
     }
 
-    long diff = _duration - _pcrClock.time();
+    uint64_t pcr = _pcrClock.time();
+    long diff = _duration - pcr;
     diff = abs(diff);
     if (diff < 900'000)
     {
+        onCreateClip();
         return true;
     }
     return false;
+}
+
+void Mpeg2TsDecoder::onCreateClip()
+{
+    createClippedFile();
+    _ofile.write((const char*)_patPacket.data(), _patPacket.length());
+    for (const auto& p : _pmtPackets)
+    {
+        _ofile.write((const char*)p.data(), p.length());
+    }
+    _duration = _pcrClock.time() + _length;
+    _videoDecoder.reset();
+
 }
 
 

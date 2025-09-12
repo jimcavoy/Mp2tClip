@@ -30,7 +30,8 @@ private:
     void createClippedFile();
     void writePacket(lcss::TransportPacket& pckt);
     void updateClock(const lcss::TransportPacket& pckt);
-    bool timeExpired() const;
+    bool timeExpired();
+    void onCreateClip();
 
 private:
     const ThetaStream::CommandLineParser& _cmdline;
@@ -44,9 +45,8 @@ private:
     PmtProxy _pmtProxy{};
     VideoDecoder _videoDecoder{};
     PCRClock _pcrClock;
-    AccessUnit _previousAU;
-    AccessUnit _nextAU;
-    bool _labelChanged{ false };
+    AccessUnit _previousLabelAU;
+    AccessUnit _nextLabelAU;
     uint64_t _length{};
     uint64_t _offset{};
 };
