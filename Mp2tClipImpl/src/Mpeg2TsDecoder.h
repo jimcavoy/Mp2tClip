@@ -9,6 +9,7 @@
 
 #include <fstream>
 #include <limits>
+#include <vector>
 
 #include <mp2tp/libmp2tp.h>
 
@@ -28,10 +29,10 @@ public:
 
 private:
     void createClippedFile();
-    void writePacket(lcss::TransportPacket& pckt);
     void updateClock(const lcss::TransportPacket& pckt);
     bool timeExpired();
     void onCreateClip();
+    void onPayloadUnitStart(lcss::TransportPacket& pckt);
 
 private:
     const ThetaStream::CommandLineParser& _cmdline;
@@ -47,7 +48,9 @@ private:
     PCRClock _pcrClock;
     AccessUnit _previousLabelAU;
     AccessUnit _nextLabelAU;
+    AccessUnit _currentAU;
     uint64_t _length{};
     uint64_t _offset{};
+    std::vector<AccessUnit> _segment;
 };
 
