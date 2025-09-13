@@ -272,7 +272,7 @@ bool Mpeg2TsDecoder::timeExpired()
     uint64_t pcr = _pcrClock.time();
     long diff = _duration - pcr;
     diff = abs(diff);
-    if (diff < 900'000)
+    if (diff < 27'000'000)
     {
         onCreateClip();
         return true;
