@@ -34,4 +34,4 @@ install(TARGETS Mp2tClip)
 enable_testing()
 
 add_test(NAME Clip
-	COMMAND Mp2tClip -s ${PROJECT_SOURCE_DIR}/sample/svt_testset_420_720p50_klved_4774.ts -d 10)
+	COMMAND Mp2tClip -s ${PROJECT_SOURCE_DIR}/sample/suav_1MB_klv_4774exi.ts -d 30)
