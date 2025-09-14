@@ -269,7 +269,7 @@ void Mpeg2TsDecoder::updateClock(const lcss::TransportPacket& pckt)
             if (pcrTime > newPcrTime)
             {
                 std::cerr << "Discontinual timpstamp. Create Clip." << std::endl;
-                onCreateDiscontinualClip();
+                onCreateClipWithoutKeyFrame();
                 return;
             }
 
@@ -302,6 +302,18 @@ bool Mpeg2TsDecoder::timeExpired()
 }
 
 void Mpeg2TsDecoder::onCreateClip()
+{
+    if (_cmdline.keyFrame())
+    {
+        onCreateClipWithKeyFrame();
+    }
+    else
+    {
+        onCreateClipWithoutKeyFrame();
+    }
+}
+
+void Mpeg2TsDecoder::onCreateClipWithKeyFrame()
 {
     std::vector<AccessUnit> startAUs;
     bool isKey{ false };
@@ -350,7 +362,7 @@ void Mpeg2TsDecoder::onCreateClip()
     _segment.clear();
 }
 
-void Mpeg2TsDecoder::onCreateDiscontinualClip()
+void Mpeg2TsDecoder::onCreateClipWithoutKeyFrame()
 {
     // write out the current segment to the clip file
     for (auto& au : _segment)

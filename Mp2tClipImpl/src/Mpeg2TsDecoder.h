@@ -32,7 +32,8 @@ private:
     void updateClock(const lcss::TransportPacket& pckt);
     bool timeExpired();
     void onCreateClip();
-    void onCreateDiscontinualClip();
+    void onCreateClipWithKeyFrame();
+    void onCreateClipWithoutKeyFrame();
     void onPayloadUnitStart(lcss::TransportPacket& pckt);
 
 private:
