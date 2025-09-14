@@ -135,7 +135,7 @@ namespace
 
 Mpeg2TsDecoder::Mpeg2TsDecoder(const ThetaStream::CommandLineParser& cmdline)
     : _cmdline(cmdline)
-    , _length((cmdline.length() + 1) * RESOLUTION)
+    , _length((cmdline.length() + 2) * RESOLUTION)
     , _offset(cmdline.offset() * RESOLUTION)
 {
     createOutputDir(cmdline.outputDirectory());
@@ -195,6 +195,13 @@ void Mpeg2TsDecoder::close()
 {
     if (_ofile.is_open())
     {
+        if (!_segment.empty())
+        {
+            for (auto& au : _segment)
+            {
+                _ofile.write((char*)au.data(), au.length());
+            }
+        }
         _ofile.close();
     }
 }
@@ -242,15 +249,29 @@ void Mpeg2TsDecoder::createClippedFile()
 
 void Mpeg2TsDecoder::updateClock(const lcss::TransportPacket& pckt)
 {
+    PCRClock temp;
     const char afe = pckt.adaptationFieldExist();
     if (afe == 0x02 || afe == 0x03)
     {
         const lcss::AdaptationField* adf = pckt.getAdaptationField();
         if (adf != nullptr && adf->length() > 0 && adf->PCR_flag())
         {
+            // Check for dis-continual increase in the PCR time
             uint8_t pcr[6]{};
             adf->getPCR(pcr);
+
+            temp.setTime(pcr);
+
+            auto pcrTime = _pcrClock.time();
             _pcrClock.setTime(pcr);
+            auto newPcrTime = temp.time();
+
+            if (pcrTime > newPcrTime)
+            {
+                std::cerr << "Discontinual timpstamp. Create Clip." << std::endl;
+                onCreateDiscontinualClip();
+                return;
+            }
 
             if (_duration == std::numeric_limits<uint64_t>::max() && _offset < _pcrClock.time())
             {
@@ -325,6 +346,28 @@ void Mpeg2TsDecoder::onCreateClip()
     {
         _ofile.write((const char*)au.data(), au.length());
     }
+    _duration = _pcrClock.time() + _length;
+    _segment.clear();
+}
+
+void Mpeg2TsDecoder::onCreateDiscontinualClip()
+{
+    // write out the current segment to the clip file
+    for (auto& au : _segment)
+    {
+        _ofile.write((const char*)au.data(), au.length());
+    }
+
+    // Create a new clip file
+    createClippedFile();
+
+    // Add PAT and PMT add the beginning of the clip file
+    _ofile.write((const char*)_patPacket.data(), _patPacket.length());
+    for (const auto& p : _pmtPackets)
+    {
+        _ofile.write((const char*)p.data(), p.length());
+    }
+
     _duration = _pcrClock.time() + _length;
     _segment.clear();
 }
