@@ -372,6 +372,11 @@ void Mpeg2TsDecoder::onCreateClipWithKeyFrame()
 
 void Mpeg2TsDecoder::onCreateClipWithoutKeyFrame()
 {
+    if (!_ofile.is_open())
+    {
+        createClippedFile();
+    }
+
     // write out the current segment to the clip file
     for (auto& au : _segment)
     {
