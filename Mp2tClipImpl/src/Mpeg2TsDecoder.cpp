@@ -195,13 +195,21 @@ void Mpeg2TsDecoder::close()
 {
     if (_ofile.is_open())
     {
-        if (!_segment.empty())
+        for (auto& au : _segment)
         {
-            for (auto& au : _segment)
-            {
-                _ofile.write((char*)au.data(), au.length());
-            }
+            _ofile.write((char*)au.data(), au.length());
         }
+        _segment.clear();
+        _ofile.close();
+    }
+    else if (!_segment.empty())
+    {
+        createClippedFile();
+        for (auto& au : _segment)
+        {
+            _ofile.write((char*)au.data(), au.length());
+        }
+        _segment.clear();
         _ofile.close();
     }
 }
