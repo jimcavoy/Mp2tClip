@@ -153,10 +153,14 @@ void Mpeg2TsDecoder::onPacket(lcss::TransportPacket& pckt)
     updateClock(pckt);
 
     auto pcrTime = _pcrClock.time();
-
     if (_offset > 0 && _offset > pcrTime)
     {
         return;
+    }
+
+    if (!_ofile.is_open())
+    {
+        createClippedFile();
     }
 
     if (pckt.payloadUnitStart())
