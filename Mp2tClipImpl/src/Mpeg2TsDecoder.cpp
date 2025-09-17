@@ -246,7 +246,7 @@ void Mpeg2TsDecoder::createClippedFile()
         _ofile.close();
     }
 
-    _ofile.open(path, std::ios::out | std::ios::binary | std::ios::app);
+    _ofile.open(path, std::ios::out | std::ios::binary);
     if (!_ofile.is_open())
     {
         char szErr[_MAX_PATH]{};
