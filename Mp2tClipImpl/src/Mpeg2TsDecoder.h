@@ -13,6 +13,8 @@
 
 #include <mp2tp/libmp2tp.h>
 
+#include<boost/interprocess/sync/file_lock.hpp>
+
 #include "PmtProxy.h"
 #include "PCRClock.h"
 #include "AccessUnit.h"
@@ -54,5 +56,6 @@ private:
     uint64_t _length{};
     uint64_t _offset{};
     std::vector<AccessUnit> _segment;
+    boost::interprocess::file_lock _fileLock;
 };
 

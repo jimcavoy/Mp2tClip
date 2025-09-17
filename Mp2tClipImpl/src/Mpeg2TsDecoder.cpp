@@ -242,6 +242,7 @@ void Mpeg2TsDecoder::createClippedFile()
 
     if (_ofile.is_open())
     {
+        _fileLock.unlock();
         _ofile.close();
     }
 
@@ -253,6 +254,8 @@ void Mpeg2TsDecoder::createClippedFile()
         std::runtime_error exp(szErr);
         throw exp;
     }
+    _fileLock = boost::interprocess::file_lock(path.c_str());
+    _fileLock.lock();
     cerr << "Created clipped file " << fname << endl;
 #ifdef linux
     syslog(LOG_NOTICE, "Created clipped file, %s", fname.c_str());

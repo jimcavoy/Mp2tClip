@@ -23,6 +23,8 @@ FetchContent_GetProperties(loki-lib)
 
 set(LOKI_DIR "${loki-lib_SOURCE_DIR}")
 
+find_package(Boost REQUIRED COMPONENTS interprocess)
+
 add_library(Mp2tClipImpl STATIC)
 
 target_sources(Mp2tClipImpl
@@ -50,9 +52,9 @@ set_property(TARGET Mp2tClipImpl PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_compile_features(Mp2tClipImpl PUBLIC cxx_std_17)
 
 if(WIN32)
-    target_link_libraries(Mp2tClipImpl lcss::mp2tp thetastream::h264p wsock32 ws2_32)
+    target_link_libraries(Mp2tClipImpl lcss::mp2tp thetastream::h264p wsock32 ws2_32 Boost::interprocess)
 else()
-    target_link_libraries(Mp2tClipImpl lcss::mp2tp thetastream::h264p)
+    target_link_libraries(Mp2tClipImpl lcss::mp2tp thetastream::h264p Boost::interprocess)
 endif()
 
 
