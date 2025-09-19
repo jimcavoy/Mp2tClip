@@ -37,6 +37,7 @@ private:
     void onCreateClipWithKeyFrame();
     void onCreateClipWithoutKeyFrame();
     void onPayloadUnitStart(lcss::TransportPacket& pckt);
+    void addToSegment(AccessUnit& au);
 
 private:
     const ThetaStream::CommandLineParser& _cmdline;

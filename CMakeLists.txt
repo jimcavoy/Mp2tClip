@@ -35,3 +35,6 @@ enable_testing()
 
 add_test(NAME Clip
 	COMMAND Mp2tClip -s ${PROJECT_SOURCE_DIR}/sample/suav_1MB_klv_4774exi.ts -d 30)
+
+add_test(NAME ClipWithKeyFrame
+	COMMAND Mp2tClip -s ${PROJECT_SOURCE_DIR}/sample/suav_1MB_klv_4774exi.ts -d 30 -k)

@@ -133,10 +133,28 @@ namespace
     }
 }
 
+class FileLocker
+{
+public:
+    FileLocker(boost::interprocess::file_lock& fl)
+        :_fileLock(fl)
+    {
+        _fileLock.unlock();
+    }
+
+    ~FileLocker()
+    {
+        _fileLock.lock();
+    }
+
+private:
+    boost::interprocess::file_lock& _fileLock;
+};
+
 Mpeg2TsDecoder::Mpeg2TsDecoder(const ThetaStream::CommandLineParser& cmdline)
     : _cmdline(cmdline)
-    , _length((cmdline.length() + 2) * RESOLUTION)
-    , _offset(cmdline.offset() * RESOLUTION)
+    , _length((cmdline.length() + 2)* RESOLUTION)
+    , _offset(cmdline.offset()* RESOLUTION)
 {
     createOutputDir(cmdline.outputDirectory());
 }
@@ -338,29 +356,10 @@ void Mpeg2TsDecoder::onCreateClipWithKeyFrame()
         createClippedFile();
     }
 
-    // Find the last key frame which will be used to start a new clip file.
-    for (std::vector<AccessUnit>::reverse_iterator it = _segment.rbegin(); it != _segment.rend();)
-    {
-        isKey = it->isKey();
-        startAUs.insert(startAUs.begin(), *it);
-        // remove the current segment;
-        it = std::vector<AccessUnit>::reverse_iterator(_segment.erase((++it).base()));
-
-        if (isKey == true)
-        {
-            break;
-        }
-    }
-
-    // write out the current segment to the clip file
-    for (auto& au : _segment)
-    {
-        _ofile.write((const char*)au.data(), au.length());
-    }
-
     // Create a new clip file
     createClippedFile();
 
+    FileLocker fl(_fileLock);
     // Add PAT and PMT add the beginning of the clip file
     _ofile.write((const char*)_patPacket.data(), _patPacket.length());
     for (const auto& p : _pmtPackets)
@@ -368,8 +367,8 @@ void Mpeg2TsDecoder::onCreateClipWithKeyFrame()
         _ofile.write((const char*)p.data(), p.length());
     }
 
-    // Add the key frame at the beginning of the clip file
-    for (auto& au : startAUs)
+    // The segment will start with a Key Frame
+    for (auto& au : _segment)
     {
         _ofile.write((const char*)au.data(), au.length());
     }
@@ -379,20 +378,10 @@ void Mpeg2TsDecoder::onCreateClipWithKeyFrame()
 
 void Mpeg2TsDecoder::onCreateClipWithoutKeyFrame()
 {
-    if (!_ofile.is_open())
-    {
-        createClippedFile();
-    }
-
-    // write out the current segment to the clip file
-    for (auto& au : _segment)
-    {
-        _ofile.write((const char*)au.data(), au.length());
-    }
-
     // Create a new clip file
     createClippedFile();
 
+    FileLocker fl(_fileLock);
     // Add PAT and PMT add the beginning of the clip file
     _ofile.write((const char*)_patPacket.data(), _patPacket.length());
     for (const auto& p : _pmtPackets)
@@ -412,7 +401,7 @@ void Mpeg2TsDecoder::onPayloadUnitStart(lcss::TransportPacket& pckt)
     {
         _pat.parse(data);
         _patPacket = pckt;
-        _segment.push_back(AccessUnit(pckt.data(), pckt.length()));
+        addToSegment(AccessUnit(pckt.data(), pckt.length()));
     }
     else if (_pat.find(pckt.PID()) != _pat.end()) // Program Specific Information Table, chapter 2.4.4
     {
@@ -426,7 +415,7 @@ void Mpeg2TsDecoder::onPayloadUnitStart(lcss::TransportPacket& pckt)
             }
             _pmtPackets.clear();
             _pmtPackets.push_back(pckt);
-            _segment.push_back(AccessUnit(pckt.data(), pckt.length()));
+            addToSegment(AccessUnit(pckt.data(), pckt.length()));
         }
     }
     else
@@ -455,7 +444,7 @@ void Mpeg2TsDecoder::onPayloadUnitStart(lcss::TransportPacket& pckt)
                 _nextLabelAU.insert(data + bytesParsed, pckt.data_byte() - bytesParsed);
                 if (_currentAU.length() > 0)
                 {
-                    _segment.push_back(_currentAU);
+                    addToSegment(_currentAU);
                 }
                 _currentAU.clear();
                 _currentAU.insert(pckt.data(), pckt.length());
@@ -471,7 +460,7 @@ void Mpeg2TsDecoder::onPayloadUnitStart(lcss::TransportPacket& pckt)
                     {
                         _currentAU.toogleKey();
                     }
-                    _segment.push_back(_currentAU);
+                    addToSegment(_currentAU);
                     _videoDecoder.reset();
                 }
                 _currentAU.clear();
@@ -481,12 +470,67 @@ void Mpeg2TsDecoder::onPayloadUnitStart(lcss::TransportPacket& pckt)
             default:
                 if (_currentAU.length() > 0)
                 {
-                    _segment.push_back(_currentAU);
+                    addToSegment(_currentAU);
                 }
                 _currentAU.clear();
                 _currentAU.insert(pckt.data(), pckt.length());
             }
         }
+    }
+}
+
+void Mpeg2TsDecoder::addToSegment(AccessUnit& au)
+{
+    // Key Frame option is enabled
+    // The goal is to have a Key Frame access unit starting a clip file.
+    if (_cmdline.keyFrame())
+    {
+        // If the segment is empty
+        //    If the AccessUnit is a Key Frame
+        //        add the Key Frame to the segment
+        //    Else
+        //        write AccessUnit to the clip file.
+        // Else
+        //    If the AccessUnit is a Key Frame
+        //        write out the segment to the clip file
+        //        clear the segment
+        //        add the Key Frame to the segment
+        //    Else
+        //        add the Access Unit to the segment
+        if (_segment.empty())
+        {
+            if (au.isKey())
+            {
+                _segment.push_back(std::move(au));
+            }
+            else
+            {
+                FileLocker fl(_fileLock);
+                _ofile.write((const char*)au.data(), au.length());
+            }
+        }
+        else
+        {
+            if (au.isKey())
+            {
+                FileLocker fl(_fileLock);
+                for (auto& a : _segment)
+                {
+                    _ofile.write((const char*)a.data(), a.length());
+                }
+                _segment.clear();
+                _segment.push_back(std::move(au));
+            }
+            else
+            {
+                _segment.push_back(std::move(au));
+            }
+        }
+    }
+    else // Key Frame will not start a clip file.
+    {
+        FileLocker fl(_fileLock);
+        _ofile.write((const char*)au.data(), au.length());
     }
 }
 
