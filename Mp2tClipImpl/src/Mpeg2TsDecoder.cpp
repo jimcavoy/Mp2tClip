@@ -133,13 +133,30 @@ namespace
     }
 }
 
+class FileLocker
+{
+public:
+    FileLocker(boost::interprocess::file_lock& fl)
+        :_fileLock(fl)
+    {
+        _fileLock.unlock();
+    }
+
+    ~FileLocker()
+    {
+        _fileLock.lock();
+    }
+
+private:
+    boost::interprocess::file_lock& _fileLock;
+};
+
 Mpeg2TsDecoder::Mpeg2TsDecoder(const ThetaStream::CommandLineParser& cmdline)
     : _cmdline(cmdline)
-    , _length((cmdline.length() + 1) * RESOLUTION)
-    , _offset(cmdline.offset() * RESOLUTION)
+    , _length((cmdline.length() + 2)* RESOLUTION)
+    , _offset(cmdline.offset()* RESOLUTION)
 {
     createOutputDir(cmdline.outputDirectory());
-    createClippedFile();
 }
 
 Mpeg2TsDecoder::~Mpeg2TsDecoder()
@@ -153,53 +170,20 @@ void Mpeg2TsDecoder::onPacket(lcss::TransportPacket& pckt)
 
     updateClock(pckt);
 
+    auto pcrTime = _pcrClock.time();
+    if (_offset > 0 && _offset > pcrTime)
+    {
+        return;
+    }
+
+    if (!_ofile.is_open())
+    {
+        createClippedFile();
+    }
+
     if (pckt.payloadUnitStart())
     {
-        if (pckt.PID() == 0) // Program Association Table
-        {
-            _pat.parse(data);
-            _patPacket = pckt;
-        }
-        else if (_pat.find(pckt.PID()) != _pat.end()) // Program Specific Information Table, chapter 2.4.4
-        {
-            auto it = _pat.find(pckt.PID());
-            if (it->second > 0)
-            {
-                _pmt = lcss::ProgramMapTable(data, pckt.data_byte());
-                if (_pmt.parse())
-                {
-                    _pmtProxy.update(_pmt);
-                }
-                _pmtPackets.clear();
-                _pmtPackets.push_back(pckt);
-            }
-        }
-        else
-        {
-            lcss::PESPacket pes;
-            UINT16 bytesParsed = pes.parse(data);
-            if (bytesParsed > 0)
-            {
-                if (_pmtProxy.packetType(pckt.PID()) == PmtProxy::STREAM_TYPE::$EXI
-                    || _pmtProxy.packetType(pckt.PID()) == PmtProxy::STREAM_TYPE::$XML)
-                {
-                    if (_nextAU.length() > 0)
-                    {
-                        if (_previousAU.length() != 0 &&
-                            _previousAU != _nextAU &&
-                            _cmdline.breakOnLabelChange())
-                        {
-                            _labelChanged = true;
-                        }
-
-                        _previousAU = _nextAU;
-                    }
-                    _nextAU.clear();
-                    _nextAU.insert(data + bytesParsed, pckt.data_byte() - bytesParsed);
-                }
-            }
-        }
-        _ofile.flush();
+        onPayloadUnitStart(pckt);
     }
     else
     {
@@ -212,29 +196,42 @@ void Mpeg2TsDecoder::onPacket(lcss::TransportPacket& pckt)
                 _pmtProxy.update(_pmt);
             }
             _pmtPackets.push_back(pckt);
+            _currentAU.insert(pckt.data(), pckt.length());
         }
 
-        if (_pmtProxy.packetType(pckt.PID()) == PmtProxy::STREAM_TYPE::$EXI
-            || _pmtProxy.packetType(pckt.PID()) == PmtProxy::STREAM_TYPE::$XML)
+        switch (_pmtProxy.packetType(pckt.PID()))
         {
-            _nextAU.insert(data, pckt.data_byte());
+        case PmtProxy::STREAM_TYPE::$EXI:
+        case PmtProxy::STREAM_TYPE::$XML:
+            _nextLabelAU.insert(data, pckt.data_byte());
+            _currentAU.insert(pckt.data(), pckt.length());
+            break;
+        default:
+            _currentAU.insert(pckt.data(), pckt.length());
+            break;
         }
     }
-
-    switch (_pmtProxy.packetType(pckt.PID()))
-    {
-    case PmtProxy::STREAM_TYPE::H264:
-        _videoDecoder.parse(pckt.data(), (uint32_t)pckt.length());
-        break;
-    }
-
-    writePacket(pckt);
 }
 
 void Mpeg2TsDecoder::close()
 {
     if (_ofile.is_open())
     {
+        for (auto& au : _segment)
+        {
+            _ofile.write((char*)au.data(), au.length());
+        }
+        _segment.clear();
+        _ofile.close();
+    }
+    else if (!_segment.empty())
+    {
+        createClippedFile();
+        for (auto& au : _segment)
+        {
+            _ofile.write((char*)au.data(), au.length());
+        }
+        _segment.clear();
         _ofile.close();
     }
 }
@@ -263,6 +260,7 @@ void Mpeg2TsDecoder::createClippedFile()
 
     if (_ofile.is_open())
     {
+        _fileLock.unlock();
         _ofile.close();
     }
 
@@ -274,57 +272,39 @@ void Mpeg2TsDecoder::createClippedFile()
         std::runtime_error exp(szErr);
         throw exp;
     }
+    _fileLock = boost::interprocess::file_lock(path.c_str());
+    _fileLock.lock();
     cerr << "Created clipped file " << fname << endl;
 #ifdef linux
     syslog(LOG_NOTICE, "Created clipped file, %s", fname.c_str());
 #endif
 }
 
-void Mpeg2TsDecoder::writePacket(lcss::TransportPacket& pckt)
-{
-    const size_t size = pckt.length();
-    const uint64_t pcrTime = _pcrClock.time();
-
-    if (_offset > 0 && _offset > pcrTime)
-    {
-        return;
-    }
-
-    if (!_ofile.is_open())
-    {
-        createClippedFile();
-    }
-
-    if ((timeExpired() || _labelChanged) && _videoDecoder.hasKeyFrame())
-    {
-        createClippedFile();
-        _ofile.write((const char*)_patPacket.data(), _patPacket.length());
-        for (const auto& p : _pmtPackets)
-        {
-            _ofile.write((const char*)p.data(), p.length());
-        }
-        _duration = pcrTime + _length;
-        _videoDecoder.reset();
-        _labelChanged = false;
-    }
-
-    if (size > 0)
-    {
-        _ofile.write((const char*)pckt.data(), size);
-    }
-}
-
 void Mpeg2TsDecoder::updateClock(const lcss::TransportPacket& pckt)
 {
+    PCRClock temp;
     const char afe = pckt.adaptationFieldExist();
     if (afe == 0x02 || afe == 0x03)
     {
         const lcss::AdaptationField* adf = pckt.getAdaptationField();
         if (adf != nullptr && adf->length() > 0 && adf->PCR_flag())
         {
+            // Check for dis-continual increase in the PCR time
             uint8_t pcr[6]{};
             adf->getPCR(pcr);
+
+            temp.setTime(pcr);
+
+            auto pcrTime = _pcrClock.time();
             _pcrClock.setTime(pcr);
+            auto newPcrTime = temp.time();
+
+            if (pcrTime > newPcrTime)
+            {
+                std::cerr << "Discontinual timpstamp. Create Clip." << std::endl;
+                onCreateClipWithoutKeyFrame();
+                return;
+            }
 
             if (_duration == std::numeric_limits<uint64_t>::max() && _offset < _pcrClock.time())
             {
@@ -332,22 +312,228 @@ void Mpeg2TsDecoder::updateClock(const lcss::TransportPacket& pckt)
             }
         }
     }
+
+    timeExpired();
 }
 
-bool Mpeg2TsDecoder::timeExpired() const
+bool Mpeg2TsDecoder::timeExpired()
 {
-    if (_duration == std::numeric_limits<double>::max())
+    if (_duration == std::numeric_limits<uint64_t>::max())
     {
         return false;
     }
 
-    long diff = _duration - _pcrClock.time();
+    uint64_t pcr = _pcrClock.time();
+    long diff = _duration - pcr;
     diff = abs(diff);
-    if (diff < 900'000)
+    if (diff < 27'000'000)
     {
+        onCreateClip();
         return true;
     }
     return false;
+}
+
+void Mpeg2TsDecoder::onCreateClip()
+{
+    if (_cmdline.keyFrame())
+    {
+        onCreateClipWithKeyFrame();
+    }
+    else
+    {
+        onCreateClipWithoutKeyFrame();
+    }
+}
+
+void Mpeg2TsDecoder::onCreateClipWithKeyFrame()
+{
+    std::vector<AccessUnit> startAUs;
+    bool isKey{ false };
+
+    if (!_ofile.is_open())
+    {
+        createClippedFile();
+    }
+
+    // Create a new clip file
+    createClippedFile();
+
+    FileLocker fl(_fileLock);
+    // Add PAT and PMT add the beginning of the clip file
+    _ofile.write((const char*)_patPacket.data(), _patPacket.length());
+    for (const auto& p : _pmtPackets)
+    {
+        _ofile.write((const char*)p.data(), p.length());
+    }
+
+    // The segment will start with a Key Frame
+    for (auto& au : _segment)
+    {
+        _ofile.write((const char*)au.data(), au.length());
+    }
+    _duration = _pcrClock.time() + _length;
+    _segment.clear();
+}
+
+void Mpeg2TsDecoder::onCreateClipWithoutKeyFrame()
+{
+    // Create a new clip file
+    createClippedFile();
+
+    FileLocker fl(_fileLock);
+    // Add PAT and PMT add the beginning of the clip file
+    _ofile.write((const char*)_patPacket.data(), _patPacket.length());
+    for (const auto& p : _pmtPackets)
+    {
+        _ofile.write((const char*)p.data(), p.length());
+    }
+
+    _duration = _pcrClock.time() + _length;
+    _segment.clear();
+}
+
+void Mpeg2TsDecoder::onPayloadUnitStart(lcss::TransportPacket& pckt)
+{
+    const uint8_t* data = pckt.getData();
+
+    if (pckt.PID() == 0) // Program Association Table
+    {
+        _pat.parse(data);
+        _patPacket = pckt;
+        AccessUnit pat(pckt.data(), pckt.length());
+        addToSegment(pat);
+    }
+    else if (_pat.find(pckt.PID()) != _pat.end()) // Program Specific Information Table, chapter 2.4.4
+    {
+        auto it = _pat.find(pckt.PID());
+        if (it->second > 0)
+        {
+            _pmt = lcss::ProgramMapTable(data, pckt.data_byte());
+            if (_pmt.parse())
+            {
+                _pmtProxy.update(_pmt);
+            }
+            _pmtPackets.clear();
+            _pmtPackets.push_back(pckt);
+            AccessUnit pmt(pckt.data(), pckt.length());
+            addToSegment(pmt);
+        }
+    }
+    else
+    {
+        lcss::PESPacket pes;
+        UINT16 bytesParsed = pes.parse(data);
+        if (bytesParsed > 0)
+        {
+            switch (_pmtProxy.packetType(pckt.PID()))
+            {
+            case PmtProxy::STREAM_TYPE::$EXI:
+            case PmtProxy::STREAM_TYPE::$XML:
+            {
+                if (_nextLabelAU.length() > 0)
+                {
+                    if (_previousLabelAU.length() != 0 &&
+                        _previousLabelAU != _nextLabelAU &&
+                        _cmdline.breakOnLabelChange())
+                    {
+                        onCreateClip();
+                    }
+
+                    _previousLabelAU = _nextLabelAU;
+                }
+                _nextLabelAU.clear();
+                _nextLabelAU.insert(data + bytesParsed, pckt.data_byte() - bytesParsed);
+                if (_currentAU.length() > 0)
+                {
+                    addToSegment(_currentAU);
+                }
+                _currentAU.clear();
+                _currentAU.insert(pckt.data(), pckt.length());
+                break;
+            }
+            case PmtProxy::STREAM_TYPE::H264:
+            case PmtProxy::STREAM_TYPE::H265:
+            {
+                if (_currentAU.length() > 0)
+                {
+                    _videoDecoder.parse(_currentAU.data(), _currentAU.length());
+                    if (_videoDecoder.hasKeyFrame())
+                    {
+                        _currentAU.toogleKey();
+                    }
+                    addToSegment(_currentAU);
+                    _videoDecoder.reset();
+                }
+                _currentAU.clear();
+                _currentAU.insert(pckt.data(), pckt.length());
+                break;
+            }
+            default:
+                if (_currentAU.length() > 0)
+                {
+                    addToSegment(_currentAU);
+                }
+                _currentAU.clear();
+                _currentAU.insert(pckt.data(), pckt.length());
+            }
+        }
+    }
+}
+
+void Mpeg2TsDecoder::addToSegment(AccessUnit& au)
+{
+    // Key Frame option is enabled
+    // The goal is to have a Key Frame access unit starting a clip file.
+    if (_cmdline.keyFrame())
+    {
+        // If the segment is empty
+        //    If the AccessUnit is a Key Frame
+        //        add the Key Frame to the segment
+        //    Else
+        //        write AccessUnit to the clip file.
+        // Else
+        //    If the AccessUnit is a Key Frame
+        //        write out the segment to the clip file
+        //        clear the segment
+        //        add the Key Frame to the segment
+        //    Else
+        //        add the Access Unit to the segment
+        if (_segment.empty())
+        {
+            if (au.isKey())
+            {
+                _segment.push_back(std::move(au));
+            }
+            else
+            {
+                FileLocker fl(_fileLock);
+                _ofile.write((const char*)au.data(), au.length());
+            }
+        }
+        else
+        {
+            if (au.isKey())
+            {
+                FileLocker fl(_fileLock);
+                for (auto& a : _segment)
+                {
+                    _ofile.write((const char*)a.data(), a.length());
+                }
+                _segment.clear();
+                _segment.push_back(std::move(au));
+            }
+            else
+            {
+                _segment.push_back(std::move(au));
+            }
+        }
+    }
+    else // Key Frame will not start a clip file.
+    {
+        FileLocker fl(_fileLock);
+        _ofile.write((const char*)au.data(), au.length());
+    }
 }
 
 

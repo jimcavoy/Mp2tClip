@@ -9,9 +9,17 @@ The MPEG-2 TS Clipper __Mp2tClip__ depends on multiple projects.  To build this 
 3. To configure, build and install __Mp2tClip__ application, change directory (cd) into the Mp2tClip folder and do the following:
 
 a. Generate a build environment
+
+On Windows
 ```
-cmake -S . -B ./build
+cmake --preset=windows-base
 ```
+
+On Linux
+```
+cmake --preset=linux-base
+```
+
 b. Build the application
 ```
 cmake --build ./build
@@ -30,20 +38,21 @@ ctest --test-dir ./build
 
 ## Usage
 ```
-Mp2tClip: MPEG-2 TS Clipper Application v1.0.2
+Mp2tClip: MPEG-2 TS Clipper Application v1.1.0
 Copyright (c) 2025 ThetaStream Consulting, jimcavoy@thetastream.com
 
 Usage: Mp2tClip <OPTIONS>
 
-Options: 
-  -s	Source MPEG-2 TS file; otherwise, stdin.
-  -d	Clip duration in seconds. (default: 60 seconds)
-  -o	Output directory where the application writes the clipped files. (default: clipped)
-  -O	Offset time when to start clipping in seconds. (default: 0 seconds)
-  -n	The base name for the output clip file; otherwise, use the source file name.
-  	  If stdin, use the default name.  (default: clip) 
-  -b	Break when the confidentiality label changes.
-  -?	Print this message.
+Options:
+  -s    Source MPEG-2 TS file; otherwise, stdin.
+  -d    Clip duration in seconds. (default: 60 seconds)
+  -o    Output directory where the application writes the clipped files. (default: clipped)
+  -O    Offset time when to start clipping in seconds. (default: 0 seconds)
+  -n    The base name for the output clip file; otherwise, use the source file name.
+          If stdin, use the default name.  (default: clip)
+  -b    Break when the confidentiality label changes.
+  -k    Try to ensure the first frame in a clip is a key frame (default: false).
+  -?    Print this message.
 
 ```
 

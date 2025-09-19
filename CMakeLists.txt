@@ -4,7 +4,7 @@
 cmake_minimum_required (VERSION 3.21)
 
 project(Mp2tClip
-	VERSION 1.0.2
+	VERSION 1.1.0
 	DESCRIPTION "A command line program that decompose (clips) a MPEG-2 TS file/stream into multiple files."
 	LANGUAGES CXX
 )
@@ -34,4 +34,7 @@ install(TARGETS Mp2tClip)
 enable_testing()
 
 add_test(NAME Clip
-	COMMAND Mp2tClip -s ${PROJECT_SOURCE_DIR}/sample/svt_testset_420_720p50_klved_4774.ts -d 10)
+	COMMAND Mp2tClip -s ${PROJECT_SOURCE_DIR}/sample/suav_1MB_klv_4774exi.ts -d 30)
+
+add_test(NAME ClipWithKeyFrame
+	COMMAND Mp2tClip -s ${PROJECT_SOURCE_DIR}/sample/suav_1MB_klv_4774exi.ts -d 30 -k)

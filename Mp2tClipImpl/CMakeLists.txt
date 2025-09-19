@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.21.0)
 
 project (
     Mp2tClipImpl
-    VERSION 1.0.2
+    VERSION 1.1.0
     DESCRIPTION "The core code for the Mp2tClip application."
     LANGUAGES CXX
 )
@@ -22,6 +22,8 @@ FetchContent_MakeAvailable(loki-lib)
 FetchContent_GetProperties(loki-lib)
 
 set(LOKI_DIR "${loki-lib_SOURCE_DIR}")
+
+find_package(Boost REQUIRED COMPONENTS interprocess)
 
 add_library(Mp2tClipImpl STATIC)
 
@@ -50,9 +52,9 @@ set_property(TARGET Mp2tClipImpl PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_compile_features(Mp2tClipImpl PUBLIC cxx_std_17)
 
 if(WIN32)
-    target_link_libraries(Mp2tClipImpl lcss::mp2tp thetastream::h264p wsock32 ws2_32)
+    target_link_libraries(Mp2tClipImpl lcss::mp2tp thetastream::h264p wsock32 ws2_32 Boost::interprocess)
 else()
-    target_link_libraries(Mp2tClipImpl lcss::mp2tp thetastream::h264p)
+    target_link_libraries(Mp2tClipImpl lcss::mp2tp thetastream::h264p Boost::interprocess)
 endif()
 
 
