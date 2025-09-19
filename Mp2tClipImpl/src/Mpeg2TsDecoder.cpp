@@ -401,7 +401,8 @@ void Mpeg2TsDecoder::onPayloadUnitStart(lcss::TransportPacket& pckt)
     {
         _pat.parse(data);
         _patPacket = pckt;
-        addToSegment(AccessUnit(pckt.data(), pckt.length()));
+        AccessUnit pat(pckt.data(), pckt.length());
+        addToSegment(pat);
     }
     else if (_pat.find(pckt.PID()) != _pat.end()) // Program Specific Information Table, chapter 2.4.4
     {
@@ -415,7 +416,8 @@ void Mpeg2TsDecoder::onPayloadUnitStart(lcss::TransportPacket& pckt)
             }
             _pmtPackets.clear();
             _pmtPackets.push_back(pckt);
-            addToSegment(AccessUnit(pckt.data(), pckt.length()));
+            AccessUnit pmt(pckt.data(), pckt.length());
+            addToSegment(pmt);
         }
     }
     else
