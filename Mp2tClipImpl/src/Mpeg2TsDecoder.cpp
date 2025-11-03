@@ -430,6 +430,7 @@ void Mpeg2TsDecoder::onPayloadUnitStart(lcss::TransportPacket& pckt)
             {
             case PmtProxy::STREAM_TYPE::$EXI:
             case PmtProxy::STREAM_TYPE::$XML:
+            case PmtProxy::STREAM_TYPE::$BRL:
             {
                 if (_nextLabelAU.length() > 0)
                 {

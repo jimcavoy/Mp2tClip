@@ -16,7 +16,8 @@ public:
         AUDIO,
         KLVA,
         $EXI,
-        $XML
+        $XML,
+        $BRL
     };
 
 private:
