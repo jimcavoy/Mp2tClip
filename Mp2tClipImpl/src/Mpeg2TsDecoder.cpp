@@ -203,6 +203,7 @@ void Mpeg2TsDecoder::onPacket(lcss::TransportPacket& pckt)
         {
         case PmtProxy::STREAM_TYPE::$EXI:
         case PmtProxy::STREAM_TYPE::$XML:
+        case PmtProxy::STREAM_TYPE::$BRL:
             _nextLabelAU.insert(data, pckt.data_byte());
             _currentAU.insert(pckt.data(), pckt.length());
             break;
