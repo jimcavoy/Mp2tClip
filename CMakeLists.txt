@@ -30,6 +30,17 @@ target_compile_features(
 # Install targets
 install(TARGETS Mp2tClip)
 
+# Create Package
+set(CPACK_PACKAGE_NAME "Mp2tClip")
+set(CPACK_PACKAGE_VENDOR "ThetaStream Consulting")
+set(CPACK_PACKAGE_CONTACT "jimcavoy@thetastream.com")
+set(CPACK_PACKAGE_DESCRIPTION, "Decompose a MPEG-2 TS file into multiple files.")
+if (UNIX)
+set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
+set(CPACK_GENERATOR "DEB")
+endif ()
+include(CPack)
+
 # Test cases
 enable_testing()
 
