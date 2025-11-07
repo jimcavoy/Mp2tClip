@@ -58,6 +58,10 @@ void PmtProxy::update(const lcss::ProgramMapTable& pmt)
             {
                 _pid2type.insert({ pe.pid(), STREAM_TYPE::$XML });
             }
+            else if (strcmp(format_identifier, "$BRL") == 0)
+            {
+                _pid2type.insert({ pe.pid(), STREAM_TYPE::$BRL });
+            }
         }
         break;
         case 0x1B:
