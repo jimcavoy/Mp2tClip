@@ -23,7 +23,7 @@ namespace fs = std::filesystem;
 #define _MAX_PATH 512
 #endif
 
-const uint64_t RESOLUTION = 27'000'000; // 27MHz
+const uint64_t RESOLUTION = 27'000'000; // 27 MHz
 
 namespace
 {
@@ -153,8 +153,8 @@ private:
 
 Mpeg2TsDecoder::Mpeg2TsDecoder(const ThetaStream::CommandLineParser& cmdline)
     : _cmdline(cmdline)
-    , _length((cmdline.length() + 2)* RESOLUTION)
-    , _offset(cmdline.offset()* RESOLUTION)
+    , _length((cmdline.length() + 1) * RESOLUTION)
+    , _offset(cmdline.offset() * RESOLUTION)
 {
     createOutputDir(cmdline.outputDirectory());
 }
@@ -326,8 +326,9 @@ bool Mpeg2TsDecoder::timeExpired()
 
     uint64_t pcr = _pcrClock.time();
     long diff = _duration - pcr;
-    diff = abs(diff);
-    if (diff < 27'000'000)
+    long absDiff = abs(diff);
+    if (absDiff < 27'000'000 // Within one second, create a clip
+        || _duration < pcr ) // If the pcr > duration, we lost PCR timestamp.
     {
         onCreateClip();
         return true;
@@ -337,6 +338,8 @@ bool Mpeg2TsDecoder::timeExpired()
 
 void Mpeg2TsDecoder::onCreateClip()
 {
+    _duration = _pcrClock.time() + _length;
+
     if (_cmdline.keyFrame())
     {
         onCreateClipWithKeyFrame();
@@ -373,7 +376,6 @@ void Mpeg2TsDecoder::onCreateClipWithKeyFrame()
     {
         _ofile.write((const char*)au.data(), au.length());
     }
-    _duration = _pcrClock.time() + _length;
     _segment.clear();
 }
 
@@ -389,8 +391,6 @@ void Mpeg2TsDecoder::onCreateClipWithoutKeyFrame()
     {
         _ofile.write((const char*)p.data(), p.length());
     }
-
-    _duration = _pcrClock.time() + _length;
     _segment.clear();
 }
 
