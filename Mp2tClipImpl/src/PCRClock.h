@@ -11,6 +11,8 @@ public:
 
 public:
 	void setTime(uint8_t* time);
+	void getTime(uint8_t* buf);
+	
 	double timeInSeconds() const;
 	uint64_t time() const;
 	uint64_t baseTime() const;

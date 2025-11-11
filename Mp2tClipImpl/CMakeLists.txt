@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.21.0)
 
 project (
     Mp2tClipImpl
-    VERSION 1.2.0
+    VERSION 1.2.1
     DESCRIPTION "The core code for the Mp2tClip application."
     LANGUAGES CXX
 )
@@ -47,7 +47,7 @@ target_sources(Mp2tClipImpl
     src/VideoDecoder.h
 )
 
-set_property(TARGET Mp2tClipImpl PROPERTY POSITION_INDEPENDENT_CODE ON)
+set_target_properties(Mp2tClipImpl PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 target_compile_features(Mp2tClipImpl PUBLIC cxx_std_17)
 

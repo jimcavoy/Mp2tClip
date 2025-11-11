@@ -32,7 +32,7 @@ public:
 private:
     void createClippedFile();
     void updateClock(const lcss::TransportPacket& pckt);
-    bool timeExpired();
+    bool timeExpired() const;
     void onCreateClip();
     void onCreateClipWithKeyFrame();
     void onCreateClipWithoutKeyFrame();
