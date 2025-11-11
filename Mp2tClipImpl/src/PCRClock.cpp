@@ -30,6 +30,11 @@ void PCRClock::setTime(uint8_t* time)
 	memcpy(_time, time, 6);
 }
 
+void PCRClock::getTime(uint8_t* buf)
+{
+	memcpy(buf, _time, 6);
+}
+
 double PCRClock::timeInSeconds() const
 {
 	return (double)(time() / RESOLUTION);

@@ -99,12 +99,13 @@ namespace
         char newfname[512]{};
         char* bname = basename((char*)path.c_str());
         char fname[128]{};
-        int i = 0;
-        char c = bname[i];
-        while (c != '.')
+        size_t len = strlen(bname);
+        for (int i = 0; i < len; i++)
         {
-            fname[i] = c;
-            c = bname[i++];
+            char c = bname[i];
+            if (c == '.')
+                break;
+            fname[i] = bname[i];
         }
 
         string ts = create_timestamp();
@@ -295,17 +296,19 @@ void Mpeg2TsDecoder::updateClock(const lcss::TransportPacket& pckt)
             adf->getPCR(pcr);
 
             temp.setTime(pcr);
-
             auto pcrTime = _pcrClock.time();
-            _pcrClock.setTime(pcr);
+            _pcrClock.setTime(pcr); 
             auto newPcrTime = temp.time();
 
             if (pcrTime > newPcrTime)
             {
                 std::cerr << "Discontinual timpstamp. Create Clip." << std::endl;
                 onCreateClipWithoutKeyFrame();
+                _duration = std::numeric_limits<uint64_t>::max();
+                uint8_t nullTime[6]{};
+                _pcrClock.setTime(nullTime);
                 return;
-            }
+            }            
 
             if (_duration == std::numeric_limits<uint64_t>::max() && _offset < _pcrClock.time())
             {
@@ -314,10 +317,13 @@ void Mpeg2TsDecoder::updateClock(const lcss::TransportPacket& pckt)
         }
     }
 
-    timeExpired();
+    if (timeExpired())
+    {
+        onCreateClip();
+    }
 }
 
-bool Mpeg2TsDecoder::timeExpired()
+bool Mpeg2TsDecoder::timeExpired() const
 {
     if (_duration == std::numeric_limits<uint64_t>::max())
     {
@@ -327,10 +333,10 @@ bool Mpeg2TsDecoder::timeExpired()
     uint64_t pcr = _pcrClock.time();
     long diff = _duration - pcr;
     long absDiff = abs(diff);
+
     if (absDiff < 27'000'000 // Within one second, create a clip
         || _duration < pcr ) // If the pcr > duration, we lost PCR timestamp.
-    {
-        onCreateClip();
+    {        
         return true;
     }
     return false;
@@ -338,6 +344,7 @@ bool Mpeg2TsDecoder::timeExpired()
 
 void Mpeg2TsDecoder::onCreateClip()
 {
+    _duration = _pcrClock.time() + _length;
     if (_cmdline.keyFrame())
     {
         onCreateClipWithKeyFrame();
@@ -350,9 +357,6 @@ void Mpeg2TsDecoder::onCreateClip()
 
 void Mpeg2TsDecoder::onCreateClipWithKeyFrame()
 {
-    std::vector<AccessUnit> startAUs;
-    bool isKey{ false };
-
     if (!_ofile.is_open())
     {
         createClippedFile();
@@ -374,7 +378,7 @@ void Mpeg2TsDecoder::onCreateClipWithKeyFrame()
     {
         _ofile.write((const char*)au.data(), au.length());
     }
-    _duration = _pcrClock.time() + _length;
+
     _segment.clear();
 }
 
@@ -390,8 +394,6 @@ void Mpeg2TsDecoder::onCreateClipWithoutKeyFrame()
     {
         _ofile.write((const char*)p.data(), p.length());
     }
-    _duration = _pcrClock.time() + _length;
-    _segment.clear();
 }
 
 void Mpeg2TsDecoder::onPayloadUnitStart(lcss::TransportPacket& pckt)
