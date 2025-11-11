@@ -338,8 +338,6 @@ bool Mpeg2TsDecoder::timeExpired()
 
 void Mpeg2TsDecoder::onCreateClip()
 {
-    _duration = _pcrClock.time() + _length;
-
     if (_cmdline.keyFrame())
     {
         onCreateClipWithKeyFrame();
@@ -376,6 +374,7 @@ void Mpeg2TsDecoder::onCreateClipWithKeyFrame()
     {
         _ofile.write((const char*)au.data(), au.length());
     }
+    _duration = _pcrClock.time() + _length;
     _segment.clear();
 }
 
@@ -391,6 +390,7 @@ void Mpeg2TsDecoder::onCreateClipWithoutKeyFrame()
     {
         _ofile.write((const char*)p.data(), p.length());
     }
+    _duration = _pcrClock.time() + _length;
     _segment.clear();
 }
 
