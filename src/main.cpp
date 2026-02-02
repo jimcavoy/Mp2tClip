@@ -28,8 +28,8 @@ using namespace std;
 
 void banner()
 {
-	std::cerr << "Mp2tClip: MPEG-2 TS Clipper Application v1.2.1" << std::endl;
-	std::cerr << "Copyright (c) 2025 ThetaStream Consulting, jimcavoy@thetastream.com" << std::endl;
+	std::cerr << "Mp2tClip: MPEG-2 TS Clipper Application v1.2.2" << std::endl;
+	std::cerr << "Copyright (c) 2026 ThetaStream Consulting, jimcavoy@thetastream.com" << std::endl;
 }
 
 int main(int argc, char* argv[])
