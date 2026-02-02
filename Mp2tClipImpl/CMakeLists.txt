@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.21.0)
 
 project (
     Mp2tClipImpl
-    VERSION 1.2.1
+    VERSION 1.2.2
     DESCRIPTION "The core code for the Mp2tClip application."
     LANGUAGES CXX
 )
@@ -49,7 +49,7 @@ target_sources(Mp2tClipImpl
 
 set_target_properties(Mp2tClipImpl PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
-target_compile_features(Mp2tClipImpl PUBLIC cxx_std_17)
+target_compile_features(Mp2tClipImpl PUBLIC cxx_std_20)
 
 if(WIN32)
     target_link_libraries(Mp2tClipImpl lcss::mp2tp thetastream::h264p wsock32 ws2_32 Boost::interprocess)
